@@ -4,12 +4,25 @@ Herramientas para integrar Google Forms con formularios HTML personalizados, sin
 
 ---
 
-## Archivos
+## Estructura del proyecto
+
+```
+FormsDevelopment/
+├── forms_1.html         # Formulario de cotización de viajes (producción)
+├── form-config.html     # Herramienta de inspección — solo marcado HTML
+├── form-config.css      # Estilos del inspector
+├── form-config.js       # Lógica del inspector (fetch, parsing, render)
+└── README.md
+```
 
 | Archivo | Descripción |
 |---|---|
 | `forms_1.html` | Formulario de cotización de viajes con diseño propio que envía respuestas a Google Forms |
-| `form-config.html` | Herramienta de inspección: analiza cualquier Google Form público y extrae el mapeo de campos |
+| `form-config.html` | Estructura HTML del inspector de formularios |
+| `form-config.css` | Estilos del inspector (variables, layout, tabla, badges, toast) |
+| `form-config.js` | Lógica completa: validación de URL, fetch por proxy CORS, extracción de `FB_PUBLIC_LOAD_DATA_`, parseo de campos y renderizado de resultados |
+
+> **Nota:** Los tres archivos `form-config.*` deben estar en la misma carpeta. Si abres el HTML directamente como `file://` en Chrome, el navegador puede bloquear la carga del `.js` por política de seguridad. Usa VS Code Live Server o cualquier servidor local para evitarlo.
 
 ---
 

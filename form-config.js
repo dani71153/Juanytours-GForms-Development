@@ -11,7 +11,9 @@ const Q = {
   10: { name:'Hora',                html:'input[type="time"]',     badge:'b-time',   icon:'fa-clock',         fmt:'HH:MM' },
 };
 
-let _endpoint = '';
+let _endpoint           = '';
+let _currentFormData    = null;
+let _currentViewformUrl = '';
 
 // ─── URL helpers ─────────────────────────────────────────────────────────────
 function isGoogleForms(url) {
@@ -209,7 +211,11 @@ function walkForFields(node, fields, seenIds, depth) {
 // ─── Render results ───────────────────────────────────────────────────────────
 // shortUrl: URL acortada original (forms.gle/…), o null si no aplica
 function render(formData, viewformUrl, shortUrl) {
-  _endpoint = viewformUrl.replace('/viewform', '/formResponse');
+  _endpoint           = viewformUrl.replace('/viewform', '/formResponse');
+  _currentFormData    = formData;
+  _currentViewformUrl = viewformUrl;
+  const saveTrigger = document.getElementById('saveTriggerBtn');
+  if (saveTrigger) saveTrigger.style.display = '';
 
   document.getElementById('resTitle').textContent = formData.title;
   const descEl = document.getElementById('resDesc');

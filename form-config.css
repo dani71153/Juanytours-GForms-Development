@@ -273,4 +273,175 @@ td { padding: .9rem 1rem; vertical-align: top; }
   body { padding: .75rem; }
   .url-row { flex-direction: column; }
   .hdr { flex-direction: column; text-align: center; }
+  .lib-item { flex-direction: column; align-items: flex-start; }
+  .lib-item-actions { flex-wrap: wrap; }
+  .modal-actions { flex-direction: column-reverse; }
+  .modal-actions .btn,
+  .modal-actions .btn-outline { width: 100%; justify-content: center; }
 }
+
+/* ── Card header extras ── */
+.card-hdr-right {
+  margin-left: auto;
+  display: flex; align-items: center; gap: .5rem;
+  flex-shrink: 0;
+}
+.card-hdr-count {
+  font-size: .72rem; color: var(--gray-400); font-weight: 400;
+}
+
+/* ── Save button (inside form-info banner) ── */
+.btn-save-lib {
+  display: inline-flex; align-items: center; gap: .4rem;
+  min-height: 34px; padding: .4rem .9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.22);
+  background: rgba(255,255,255,.10);
+  color: rgba(255,255,255,.88);
+  font-family: inherit; font-size: .78rem; font-weight: 600;
+  cursor: pointer; transition: background .15s;
+}
+.btn-save-lib:hover { background: rgba(255,255,255,.18); }
+.form-info-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .15rem; }
+
+/* ── Save modal ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(13,31,60,.58);
+  backdrop-filter: blur(4px);
+  display: none;
+  place-items: center;
+  z-index: 200;
+  padding: 1rem;
+}
+.modal-overlay.show { display: grid; }
+
+.modal-dialog {
+  background: var(--white);
+  border-radius: var(--rxl);
+  padding: 2rem;
+  width: min(460px, 100%);
+  box-shadow: 0 24px 70px rgba(13,31,60,.22);
+  display: grid; gap: 1.1rem;
+}
+
+.modal-hdr { display: flex; align-items: center; gap: .75rem; }
+.modal-hdr-icon {
+  display: grid; place-items: center;
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: var(--teal-pale);
+  color: var(--teal-dark);
+  flex-shrink: 0;
+}
+.modal-hdr h3 { font-size: 1.05rem; font-weight: 600; color: var(--navy); }
+
+.modal-field label {
+  display: block; font-size: .875rem; font-weight: 600;
+  color: var(--navy); margin-bottom: .4rem;
+}
+.modal-input {
+  width: 100%; min-height: 44px;
+  padding: .7rem 1rem;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--r);
+  font-family: inherit; font-size: .875rem;
+  color: var(--gray-700); background: var(--white);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.modal-input:focus { border-color: var(--teal); box-shadow: 0 0 0 4px var(--teal-glow); }
+
+.modal-dup {
+  display: flex; gap: .7rem; align-items: flex-start;
+  padding: .8rem 1rem;
+  background: rgba(245,158,11,.08);
+  border: 1px solid rgba(245,158,11,.22);
+  border-radius: var(--r);
+  font-size: .82rem; color: var(--gray-700);
+}
+.modal-dup i { color: #f59e0b; flex-shrink: 0; margin-top: .1rem; }
+
+.modal-actions {
+  display: flex; gap: .6rem;
+  flex-wrap: wrap; justify-content: flex-end;
+}
+.modal-actions .btn-primary {
+  min-height: 40px; padding: .55rem 1.1rem; font-size: .875rem;
+}
+.modal-actions .btn-outline {
+  min-height: 40px; padding: .55rem 1rem; font-size: .875rem;
+}
+
+/* ── Library section ── */
+.lib-toolbar {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .8rem 1.75rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+.lib-toolbar i { color: var(--gray-400); flex-shrink: 0; }
+.lib-search {
+  flex: 1; min-width: 0; min-height: 34px;
+  padding: .35rem .75rem;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 999px;
+  font-family: inherit; font-size: .875rem;
+  color: var(--gray-700); background: var(--white);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.lib-search:focus { border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-glow); }
+
+.lib-empty {
+  padding: 2.5rem 1.75rem;
+  text-align: center; color: var(--gray-400);
+}
+.lib-empty i { font-size: 2rem; display: block; margin-bottom: .75rem; }
+.lib-empty p { font-size: .875rem; line-height: 1.6; }
+
+.lib-item {
+  display: flex; align-items: center; gap: 1rem;
+  padding: .85rem 1.75rem;
+  border-bottom: 1px solid var(--gray-100);
+  transition: background .1s;
+}
+.lib-item:last-child { border-bottom: none; }
+.lib-item:hover { background: var(--gray-50); }
+.lib-item--archived { opacity: .6; }
+
+.lib-item-info { flex: 1; min-width: 0; display: grid; gap: .25rem; }
+.lib-item-top  { display: flex; align-items: center; gap: .55rem; flex-wrap: wrap; }
+.lib-alias { font-size: .9rem; font-weight: 600; color: var(--navy); }
+.lib-title { font-size: .78rem; color: var(--gray-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-meta  { display: flex; flex-wrap: wrap; gap: .55rem; font-size: .71rem; color: var(--gray-400); }
+.lib-meta i { margin-right: .2rem; }
+
+.lib-badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .15rem .5rem; border-radius: 999px;
+  font-size: .68rem; font-weight: 600; white-space: nowrap;
+}
+.lib-badge--active   { background: rgba(16,185,129,.1); color: #047857; }
+.lib-badge--archived { background: var(--gray-100); color: var(--gray-500); }
+
+.lib-item-actions { display: flex; gap: .4rem; flex-shrink: 0; align-items: center; }
+
+.btn-lib {
+  display: inline-flex; align-items: center; gap: .3rem;
+  min-height: 30px; padding: .28rem .65rem;
+  border-radius: 7px;
+  border: 1.5px solid var(--gray-200);
+  background: transparent; color: var(--gray-700);
+  font-family: inherit; font-size: .73rem; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+  transition: all .13s;
+}
+.btn-lib:hover { background: var(--gray-50); border-color: var(--gray-300); }
+
+.btn-lib--load    { color: var(--teal-dark); border-color: rgba(13,154,148,.3); }
+.btn-lib--load:hover   { background: var(--teal-pale); border-color: var(--teal); }
+.btn-lib--export  { color: var(--info); border-color: rgba(59,130,246,.25); }
+.btn-lib--export:hover { background: rgba(59,130,246,.06); border-color: var(--info); }
+.btn-lib--archive { color: var(--gray-600); }
+.btn-lib--delete  { color: var(--error); border-color: rgba(239,68,68,.2); }
+.btn-lib--delete:hover { background: rgba(239,68,68,.05); border-color: var(--error); }

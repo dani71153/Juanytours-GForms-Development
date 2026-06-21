@@ -99,6 +99,13 @@
           </button>
         </div>
       </div>
+
+      <div class="form-info-actions">
+        <button id="saveTriggerBtn" class="btn-save-lib" style="display:none"
+                onclick="openSaveDialog(_currentFormData, _currentViewformUrl)">
+          <i class="fa-solid fa-floppy-disk"></i> Guardar en biblioteca
+        </button>
+      </div>
     </div>
 
     <!-- Fields table -->
@@ -180,6 +187,30 @@
     </div>
 
   </div><!-- /results -->
+
+  <!-- Library -->
+  <div class="card" id="librarySection">
+    <div class="card-hdr">
+      <div class="card-hdr-icon"><i class="fa-solid fa-database"></i></div>
+      <h2>Biblioteca</h2>
+      <span class="card-hdr-count" id="libCount"></span>
+      <div class="card-hdr-right">
+        <button class="btn btn-outline" onclick="triggerImport()" title="Importar desde JSON">
+          <i class="fa-solid fa-file-import"></i> Importar
+        </button>
+        <button class="btn btn-outline" onclick="exportAllForms()" title="Exportar todos">
+          <i class="fa-solid fa-file-export"></i> Exportar todo
+        </button>
+      </div>
+    </div>
+    <div class="lib-toolbar">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input class="lib-search" id="libSearch" type="search"
+             placeholder="Buscar por nombre, título o URL…" />
+    </div>
+    <div id="libList"></div>
+  </div>
+
 </div><!-- /page -->
 
 <!-- Toast -->
@@ -188,6 +219,44 @@
   <span id="toastMsg">Copiado</span>
 </div>
 
+<!-- Save to library modal -->
+<div class="modal-overlay" id="saveModal">
+  <div class="modal-dialog">
+    <div class="modal-hdr">
+      <div class="modal-hdr-icon"><i class="fa-solid fa-floppy-disk"></i></div>
+      <h3>Guardar en biblioteca</h3>
+    </div>
+    <div class="modal-field">
+      <label for="saveAlias">Nombre del formulario</label>
+      <input class="modal-input" id="saveAlias" type="text"
+             placeholder="Ej: Cotización de viajes 2025" />
+    </div>
+    <div class="modal-dup" id="saveDupNotice" style="display:none">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span id="saveDupText"></span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeSaveDialog()">Cancelar</button>
+      <button class="btn btn-primary" id="saveBtnSave" onclick="confirmSave()">
+        <i class="fa-solid fa-floppy-disk"></i> Guardar
+      </button>
+      <button class="btn btn-primary" id="saveBtnUpdate" style="display:none"
+              onclick="confirmSave('update')">
+        <i class="fa-solid fa-rotate"></i> Actualizar
+      </button>
+      <button class="btn btn-outline" id="saveBtnNew" style="display:none"
+              onclick="confirmSave('new')">
+        <i class="fa-solid fa-plus"></i> Crear nuevo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden file input for JSON import -->
+<input type="file" id="importFileInput" accept=".json" style="display:none"
+       onchange="handleImport(event)" />
+
 <script src="form-config.js"></script>
+<script src="form-db.js"></script>
 </body>
 </html>

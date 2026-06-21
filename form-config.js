@@ -295,6 +295,39 @@ function isEntryId(n) {
   return typeof n === 'number' && Number.isInteger(n) && n >= 10000000;
 }
 
+function extractFieldOptions(entry) {
+  const directCandidates = [entry[1], entry[4], entry[3], entry[5]];
+  for (const candidate of directCandidates) {
+    const opts = optionsFromCandidate(candidate);
+    if (opts.length) return opts;
+  }
+
+  return findBestOptionsList(entry);
+}
+
+function optionsFromCandidate(candidate) {
+  if (!Array.isArray(candidate)) return [];
+
+  const opts = candidate
+    .filter(item => Array.isArray(item) && typeof item[0] === 'string')
+    .map(item => item[0].trim())
+    .filter(opt => opt && opt !== '__other_option__');
+
+  return [...new Set(opts)];
+}
+
+function findBestOptionsList(node, depth = 0) {
+  if (depth > 6 || !Array.isArray(node)) return [];
+
+  let best = optionsFromCandidate(node);
+  for (const child of node) {
+    const found = findBestOptionsList(child, depth + 1);
+    if (found.length > best.length) best = found;
+  }
+
+  return best;
+}
+
 function walkForFields(node, fields, seenIds, depth) {
   if (depth > 14 || !Array.isArray(node)) return;
 
@@ -316,15 +349,7 @@ function walkForFields(node, fields, seenIds, depth) {
         seenIds.add(entry[0]);
 
         const required = entry[2] === 1;
-        let opts = [];
-        for (const oi of [4, 3]) {
-          if (Array.isArray(entry[oi])) {
-            opts = entry[oi]
-              .filter(o => Array.isArray(o) && typeof o[0] === 'string' && o[0] !== '')
-              .map(o => o[0]);
-            if (opts.length) break;
-          }
-        }
+        const opts = extractFieldOptions(entry);
         fields.push({ label, type, entryId: entry[0], name: `entry.${entry[0]}`, desc: qDesc, required, options: opts });
       }
     }

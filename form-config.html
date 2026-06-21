@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Forms Inspector | JuanyTours</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    :root {
+      --navy:       #0d1f3c;
+      --teal:       #0d9a94;
+      --teal-glow:  rgba(13,154,148,0.12);
+      --teal-pale:  #eef9f9;
+      --teal-dark:  #0a7a74;
+      --white:      #ffffff;
+      --gray-50:    #f8fafc;
+      --gray-100:   #f1f5f9;
+      --gray-200:   #e2e8f0;
+      --gray-300:   #cbd5e1;
+      --gray-400:   #94a3b8;
+      --gray-500:   #64748b;
+      --gray-600:   #475569;
+      --gray-700:   #334155;
+      --gray-800:   #1e293b;
+      --success:    #10b981;
+      --error:      #ef4444;
+      --info:       #3b82f6;
+      --r:          14px;
+      --rl:         20px;
+      --rxl:        28px;
+      --shadow:     0 4px 16px rgba(13,31,60,0.10);
+      --shadow-lg:  0 12px 40px rgba(13,31,60,0.14);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 1rem;
+      color: var(--gray-700);
+      background: linear-gradient(135deg, #f8fafc 0%, #eef7f7 48%, #fff 100%);
+      min-height: 100vh;
+      padding: 1.5rem;
+    }
+
+    .page { max-width: 920px; margin: 0 auto; display: grid; gap: 1.5rem; }
+
+    /* ── Header ── */
+    .hdr {
+      display: flex; align-items: center; gap: 1.25rem;
+      padding: 1.75rem 2rem;
+      background: var(--navy);
+      border-radius: var(--rxl);
+      box-shadow: var(--shadow-lg);
+      color: var(--white);
+    }
+    .hdr-icon {
+      display: grid; place-items: center;
+      width: 56px; height: 56px;
+      border-radius: var(--rl);
+      background: rgba(13,154,148,0.18);
+      color: var(--teal);
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    .hdr h1 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(1.35rem,3vw,1.85rem); color: var(--white); }
+    .hdr p  { color: rgba(255,255,255,0.62); font-size: 0.875rem; margin-top: 0.25rem; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--rxl);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card-hdr {
+      padding: 1rem 1.75rem;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .card-hdr-icon {
+      display: grid; place-items: center;
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      background: var(--teal-pale);
+      color: var(--teal-dark);
+      flex-shrink: 0;
+    }
+    .card-hdr h2 { font-size: 1rem; font-weight: 600; color: var(--navy); }
+    .card-body { padding: 1.75rem; }
+
+    /* ── URL input ── */
+    .url-row { display: flex; gap: 0.75rem; }
+    .url-label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--navy); margin-bottom: 0.5rem; }
+    .url-input {
+      flex: 1; min-height: 48px;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--r);
+      font-family: inherit; font-size: 0.875rem;
+      color: var(--gray-700); background: var(--white);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .url-input:focus { border-color: var(--teal); box-shadow: 0 0 0 4px var(--teal-glow); }
+    .url-input.err   { border-color: var(--error); box-shadow: 0 0 0 4px rgba(239,68,68,.10); }
+    .url-hint { font-size: 0.75rem; color: var(--gray-500); margin-top: 0.5rem; }
+    .url-err  { font-size: 0.75rem; color: var(--error); margin-top: 0.4rem; display: none; }
+    .url-err.show { display: block; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      min-height: 48px; padding: 0.75rem 1.25rem;
+      border-radius: var(--r); border: none;
+      font-family: inherit; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap;
+      transition: all .15s;
+    }
+    .btn-primary {
+      background: var(--teal); color: var(--white);
+      box-shadow: 0 4px 14px rgba(13,154,148,.28);
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--teal-dark); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .65; cursor: not-allowed; }
+    .btn-ghost {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.18);
+      color: rgba(255,255,255,.85);
+      min-height: 34px; padding: .4rem .85rem; font-size: .75rem; border-radius: 8px;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,.15); }
+    .btn-outline {
+      background: transparent; color: var(--gray-700);
+      border: 1.5px solid var(--gray-200);
+      min-height: 34px; padding: .4rem .85rem; font-size: .75rem; border-radius: 8px;
+    }
+    .btn-outline:hover { background: var(--gray-50); border-color: var(--gray-300); }
+
+    /* ── Loading / Error banners ── */
+    .banner {
+      display: none; align-items: flex-start; gap: 1rem;
+      padding: 1.1rem 1.5rem;
+      border-radius: var(--rl);
+    }
+    .banner.show { display: flex; }
+    .banner-load { background: var(--teal-pale); border: 1px solid rgba(13,154,148,.2); color: var(--teal-dark); }
+    .banner-err  { background: rgba(239,68,68,.06); border: 1px solid rgba(239,68,68,.2); color: var(--error); }
+    .banner i    { font-size: 1.15rem; flex-shrink: 0; margin-top: .1rem; }
+    .banner strong { display: block; font-size: .875rem; font-weight: 600; margin-bottom: .2rem; }
+    .banner p    { font-size: .8rem; color: var(--gray-600); }
+    .spin        { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Results ── */
+    #results { display: none; }
+    #results.show { display: grid; gap: 1.5rem; }
+
+    /* Form info banner */
+    .form-info {
+      padding: 1.5rem 1.75rem;
+      background: linear-gradient(135deg, var(--navy) 0%, #162f5a 100%);
+      border-radius: var(--rxl);
+      box-shadow: var(--shadow-lg);
+      color: var(--white);
+      display: grid; gap: .6rem;
+    }
+    .form-info h3 { font-family: 'Playfair Display', serif; font-size: 1.35rem; color: var(--white); }
+    .form-info p  { font-size: .875rem; color: rgba(255,255,255,.65); }
+    .endpoint-row {
+      display: flex; align-items: center; gap: .75rem;
+      padding: .65rem 1rem;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--r);
+      margin-top: .15rem;
+    }
+    .endpoint-label { font-size: .7rem; color: rgba(255,255,255,.45); margin-bottom: .2rem; }
+    .endpoint-row code {
+      flex: 1; font-family: 'Courier New', monospace; font-size: .75rem;
+      color: rgba(255,255,255,.82); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    /* Fields table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    thead tr { background: var(--gray-50); border-bottom: 2px solid var(--gray-200); }
+    th {
+      padding: .65rem 1rem; text-align: left;
+      font-size: .7rem; font-weight: 600; color: var(--gray-500);
+      text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid var(--gray-100); transition: background .1s; }
+    tbody tr:hover { background: var(--gray-50); }
+    tbody tr:last-child { border-bottom: none; }
+    td { padding: .9rem 1rem; vertical-align: top; }
+
+    .f-label  { font-weight: 600; color: var(--navy); }
+    .f-desc   { font-size: .75rem; color: var(--gray-500); margin-top: .2rem; }
+    .entry-chip {
+      display: inline-block;
+      font-family: 'Courier New', monospace; font-size: .75rem;
+      background: var(--gray-100); color: var(--navy);
+      padding: .25rem .55rem; border-radius: 6px;
+      cursor: pointer; transition: background .1s;
+    }
+    .entry-chip:hover { background: var(--teal-pale); color: var(--teal-dark); }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: .3rem;
+      padding: .22rem .55rem; border-radius: 999px;
+      font-size: .72rem; font-weight: 600;
+    }
+    .b-text     { background: rgba(59,130,246,.10); color: #1d4ed8; }
+    .b-para     { background: rgba(139,92,246,.10); color: #6d28d9; }
+    .b-radio    { background: rgba(245,158,11,.10); color: #b45309; }
+    .b-select   { background: rgba(16,185,129,.10); color: #047857; }
+    .b-check    { background: rgba(239,68,68,.10);  color: #b91c1c; }
+    .b-date     { background: rgba(236,72,153,.10); color: #9d174d; }
+    .b-time     { background: rgba(20,184,166,.10); color: #0f766e; }
+    .b-scale    { background: rgba(234,179,8,.10);  color: #92400e; }
+    .b-other    { background: var(--gray-100);      color: var(--gray-600); }
+
+    .opts { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .35rem; }
+    .opt-tag {
+      display: inline-block; padding: .12rem .45rem;
+      background: var(--teal-pale); color: var(--teal-dark);
+      border: 1px solid rgba(13,154,148,.15); border-radius: 999px;
+      font-size: .7rem;
+    }
+    .fmt-hint { font-size: .72rem; color: var(--gray-400); }
+    .code-sm { font-family: 'Courier New', monospace; font-size: .75rem; color: var(--gray-600); }
+
+    /* Info box */
+    .info-box {
+      display: flex; gap: .75rem; align-items: flex-start;
+      padding: 1rem 1.2rem;
+      background: rgba(59,130,246,.06);
+      border: 1px solid rgba(59,130,246,.15);
+      border-radius: var(--r);
+    }
+    .info-box i { color: var(--info); flex-shrink: 0; margin-top: .1rem; }
+    .info-box p { font-size: .875rem; color: var(--gray-600); line-height: 1.7; }
+    .info-box code {
+      display: inline-block; padding: .1rem .35rem;
+      background: var(--gray-100); border-radius: 4px;
+      font-family: 'Courier New', monospace; font-size: .8em; color: var(--navy);
+    }
+
+    /* Export */
+    .export-block { display: grid; gap: 1.25rem; }
+    .export-row   { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+    .export-title { font-size: .875rem; font-weight: 600; color: var(--navy); }
+    .code-block {
+      background: var(--gray-800); border-radius: var(--r);
+      padding: 1.1rem 1.25rem; overflow-x: auto;
+      max-height: 320px; overflow-y: auto;
+    }
+    .code-block pre {
+      color: #e2e8f0; font-family: 'Courier New', monospace;
+      font-size: .75rem; line-height: 1.65;
+      white-space: pre; tab-size: 2;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      display: flex; align-items: center; gap: .6rem;
+      padding: .7rem 1.1rem;
+      background: var(--gray-800); color: var(--white);
+      border-radius: var(--r); font-size: .875rem;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(80px); opacity: 0;
+      transition: all .25s cubic-bezier(.34,1.56,.64,1);
+      pointer-events: none; z-index: 100;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 640px) {
+      body { padding: .75rem; }
+      .url-row { flex-direction: column; }
+      .hdr { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header class="hdr">
+    <div class="hdr-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+    <div>
+      <h1>Google Forms Inspector</h1>
+      <p>Pega la URL de cualquier Google Form público para extraer todos sus campos <code style="font-family:monospace;background:rgba(255,255,255,.12);padding:.1rem .35rem;border-radius:4px;font-size:.8em">entry.*</code> y generar el código de integración.</p>
+    </div>
+  </header>
+
+  <!-- URL Input Card -->
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-icon"><i class="fa-brands fa-google"></i></div>
+      <h2>URL del formulario</h2>
+    </div>
+    <div class="card-body">
+      <label class="url-label" for="formUrl">Pega aquí la URL del Google Forms público</label>
+      <div class="url-row">
+        <input
+          class="url-input" id="formUrl" type="url"
+          placeholder="https://docs.google.com/forms/d/e/1FAIpQLSd.../viewform"
+          autocomplete="off" spellcheck="false"
+        />
+        <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeForm()">
+          <i class="fa-solid fa-magnifying-glass"></i> Analizar
+        </button>
+      </div>
+      <p class="url-err" id="urlErr"></p>
+      <p class="url-hint">
+        Formatos aceptados:
+        <code style="font-family:monospace;background:var(--gray-100);padding:.1rem .35rem;border-radius:4px;font-size:.85em">…/viewform</code>,
+        <code style="font-family:monospace;background:var(--gray-100);padding:.1rem .35rem;border-radius:4px;font-size:.85em">…/formResponse</code>,
+        URL de edición, o enlace acortado
+        <code style="font-family:monospace;background:var(--gray-100);padding:.1rem .35rem;border-radius:4px;font-size:.85em">forms.gle/…</code>
+      </p>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="banner banner-load" id="loadBanner">
+    <i class="fa-solid fa-circle-notch spin"></i>
+    <div>
+      <strong>Obteniendo estructura del formulario…</strong>
+      <p>Conectando a través de proxy CORS. Puede tardar unos segundos.</p>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="banner banner-err" id="errBanner">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <div>
+      <strong id="errTitle">Error al analizar el formulario</strong>
+      <p id="errMsg"></p>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+
+    <!-- Form info -->
+    <div class="form-info">
+      <h3 id="resTitle"></h3>
+      <p id="resDesc" style="display:none"></p>
+      <!-- Aviso de URL acortada resuelta -->
+      <div id="resShortNotice" style="display:none;font-size:.75rem;color:rgba(255,255,255,.55);padding:.5rem .75rem;background:rgba(255,255,255,.07);border-radius:8px;border:1px solid rgba(255,255,255,.1)">
+        <i class="fa-solid fa-link" style="margin-right:.4rem;color:var(--teal)"></i>
+        Enlace acortado <code id="resShortFrom" style="font-family:monospace;background:rgba(255,255,255,.1);padding:.05rem .3rem;border-radius:4px"></code>
+        resuelto a <code id="resShortTo" style="font-family:monospace;background:rgba(255,255,255,.1);padding:.05rem .3rem;border-radius:4px;word-break:break-all"></code>
+      </div>
+      <div>
+        <div class="endpoint-label">Endpoint de envío (POST)</div>
+        <div class="endpoint-row">
+          <code id="resEndpoint"></code>
+          <button class="btn btn-ghost" onclick="copyText(document.getElementById('resEndpoint').textContent)">
+            <i class="fa-solid fa-copy"></i> Copiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fields table -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-icon"><i class="fa-solid fa-list-check"></i></div>
+        <h2 id="resCount">Campos del formulario</h2>
+      </div>
+      <div class="card-body" style="padding:0">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Pregunta</th>
+                <th>Entry ID</th>
+                <th>Tipo</th>
+                <th>HTML sugerido</th>
+                <th>Opciones / Formato esperado</th>
+              </tr>
+            </thead>
+            <tbody id="fieldsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden fields reminder -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-icon"><i class="fa-solid fa-eye-slash"></i></div>
+        <h2>Campos ocultos obligatorios</h2>
+      </div>
+      <div class="card-body">
+        <div class="info-box">
+          <i class="fa-solid fa-circle-info"></i>
+          <p>
+            Incluye siempre estos tres campos en tu <code>&lt;form&gt;</code>. Sin <code>submit=Submit</code>
+            Google Forms responde <code>200 OK</code> pero no registra la respuesta.<br/><br/>
+            <code>&lt;input type="hidden" name="fvv" value="1" /&gt;</code><br/>
+            <code>&lt;input type="hidden" name="pageHistory" value="0" /&gt;</code><br/>
+            <code>&lt;input type="hidden" name="submit" value="Submit" /&gt;</code>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exports -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-icon"><i class="fa-solid fa-code"></i></div>
+        <h2>Exportar mapeo</h2>
+      </div>
+      <div class="card-body">
+        <div class="export-block">
+
+          <div>
+            <div class="export-row">
+              <span class="export-title">JSON — mapeo completo de campos</span>
+              <button class="btn btn-outline" onclick="copyEl('jsonOut')">
+                <i class="fa-solid fa-copy"></i> Copiar
+              </button>
+            </div>
+            <div class="code-block"><pre id="jsonOut"></pre></div>
+          </div>
+
+          <div>
+            <div class="export-row">
+              <span class="export-title">HTML — esqueleto de formulario listo para usar</span>
+              <button class="btn btn-outline" onclick="copyEl('htmlOut')">
+                <i class="fa-solid fa-copy"></i> Copiar
+              </button>
+            </div>
+            <div class="code-block"><pre id="htmlOut"></pre></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /results -->
+</div><!-- /page -->
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+  <span id="toastMsg">Copiado</span>
+</div>
+
+<script>
+// ─── Question type map ───────────────────────────────────────────────────────
+const Q = {
+  0:  { name:'Texto corto',         html:'input[type="text"]',     badge:'b-text',   icon:'fa-font',          fmt:'Texto libre' },
+  1:  { name:'Párrafo',             html:'textarea',               badge:'b-para',   icon:'fa-align-left',    fmt:'Texto largo' },
+  2:  { name:'Opción múltiple',     html:'input[type="radio"]',    badge:'b-radio',  icon:'fa-circle-dot',    fmt:'Valor exacto de la opción' },
+  3:  { name:'Lista desplegable',   html:'select',                 badge:'b-select', icon:'fa-list',          fmt:'Valor exacto de la opción' },
+  4:  { name:'Casillas',            html:'input[type="checkbox"]', badge:'b-check',  icon:'fa-square-check',  fmt:'Valor exacto (puede ser múltiple)' },
+  5:  { name:'Escala lineal',       html:'input[type="radio"]',    badge:'b-scale',  icon:'fa-sliders',       fmt:'Número de la escala' },
+  7:  { name:'Cuadrícula',          html:'(complejo)',             badge:'b-other',  icon:'fa-table-cells',   fmt:'Ver estructura de cuadrícula' },
+  9:  { name:'Fecha',               html:'input[type="date"]',     badge:'b-date',   icon:'fa-calendar',      fmt:'YYYY-MM-DD' },
+  10: { name:'Hora',                html:'input[type="time"]',     badge:'b-time',   icon:'fa-clock',         fmt:'HH:MM' },
+};
+
+let _endpoint = '';
+
+// ─── URL helpers ─────────────────────────────────────────────────────────────
+function isGoogleForms(url) {
+  try {
+    const p = new URL(url.trim());
+    if (p.hostname === 'forms.gle') return true; // shortener, cualquier path es válido
+    return (p.hostname === 'docs.google.com' || p.hostname === 'forms.google.com')
+        && p.pathname.includes('/forms/');
+  } catch { return false; }
+}
+
+function isShortened(url) {
+  try { return new URL(url.trim()).hostname === 'forms.gle'; }
+  catch { return false; }
+}
+
+function extractCanonical(html) {
+  const m = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i)
+         || html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']canonical["']/i);
+  return m ? m[1] : null;
+}
+
+function toViewformUrl(raw) {
+  const p = new URL(raw.trim());
+  const base = 'https://docs.google.com';
+  let path = p.pathname;
+
+  // Strip trailing slash
+  path = path.replace(/\/$/, '');
+
+  // Already ends in /viewform (possibly with params)
+  if (path.endsWith('/viewform')) return base + path;
+
+  // Has /viewform somewhere (with extra segments)
+  const vi = path.indexOf('/viewform');
+  if (vi !== -1) return base + path.slice(0, vi + '/viewform'.length);
+
+  // Has /formResponse → swap
+  if (path.includes('/formResponse')) return base + path.replace('/formResponse', '/viewform');
+
+  // Bare form path → append /viewform
+  return base + path + '/viewform';
+}
+
+// ─── Fetch via CORS proxy ────────────────────────────────────────────────────
+// Devuelve { html, resolvedUrl } — resolvedUrl es la URL final tras redireccionamientos
+async function fetchHtml(url) {
+  const enc = encodeURIComponent(url);
+
+  // Proxy 1: allorigins (JSON {contents, status:{url}}) — sigue redirects server-side
+  try {
+    const r = await fetch(`https://api.allorigins.win/get?url=${enc}`, { signal: AbortSignal.timeout(18000) });
+    if (!r.ok) throw new Error(`allorigins ${r.status}`);
+    const j = await r.json();
+    if (j && j.contents && j.contents.length > 200) {
+      // status.url contiene la URL final después de seguir el redirect
+      let resolvedUrl = (j.status && j.status.url) ? j.status.url : url;
+      // Fallback: extraer <link rel="canonical"> del HTML si seguimos en forms.gle
+      if (new URL(resolvedUrl).hostname === 'forms.gle') {
+        resolvedUrl = extractCanonical(j.contents) || resolvedUrl;
+      }
+      return { html: j.contents, resolvedUrl };
+    }
+    throw new Error('Respuesta vacía de allorigins');
+  } catch (e1) {
+    // Proxy 2: corsproxy.io (raw) — no devuelve la URL resuelta, usamos canonical
+    try {
+      const r = await fetch(`https://corsproxy.io/?${enc}`, { signal: AbortSignal.timeout(18000) });
+      if (!r.ok) throw new Error(`corsproxy ${r.status}`);
+      const txt = await r.text();
+      if (txt.length > 200) {
+        const resolvedUrl = extractCanonical(txt) || url;
+        return { html: txt, resolvedUrl };
+      }
+      throw new Error('Respuesta vacía de corsproxy');
+    } catch (e2) {
+      throw new Error(`No se pudo obtener el formulario.\nProxy 1: ${e1.message}\nProxy 2: ${e2.message}`);
+    }
+  }
+}
+
+// ─── Extract FB_PUBLIC_LOAD_DATA_ ────────────────────────────────────────────
+function extractFbData(html) {
+  const MARKER = 'FB_PUBLIC_LOAD_DATA_';
+  const idx = html.indexOf(MARKER);
+  if (idx === -1) throw new Error(
+    'No se encontró FB_PUBLIC_LOAD_DATA_ en el HTML. El formulario puede ser privado, requerir inicio de sesión, o la URL no es correcta.'
+  );
+
+  const eq = html.indexOf('=', idx + MARKER.length);
+  if (eq === -1) throw new Error('Formato inesperado al leer FB_PUBLIC_LOAD_DATA_');
+
+  // Find opening bracket
+  let start = -1;
+  for (let i = eq + 1; i < eq + 30 && i < html.length; i++) {
+    if (html[i] === '[') { start = i; break; }
+  }
+  if (start === -1) throw new Error('No se encontró el inicio del array de datos');
+
+  // Match brackets respecting strings
+  let depth = 0, inStr = false, esc = false;
+  for (let i = start; i < html.length; i++) {
+    const c = html[i];
+    if (esc)    { esc = false; continue; }
+    if (inStr)  { if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') { inStr = true; continue; }
+    if (c === '[') depth++;
+    else if (c === ']') {
+      if (--depth === 0) {
+        try { return JSON.parse(html.slice(start, i + 1)); }
+        catch (e) { throw new Error(`Error parseando JSON de Google Forms: ${e.message}`); }
+      }
+    }
+  }
+  throw new Error('No se pudo extraer el JSON (brackets no balanceados)');
+}
+
+// ─── Parse form structure ─────────────────────────────────────────────────────
+function parseForm(raw) {
+  if (!Array.isArray(raw) || !Array.isArray(raw[1])) throw new Error('Estructura de datos no reconocida');
+
+  const fb = raw[1];
+
+  // Title: scan fb for a short non-formId string at common positions
+  let title = '';
+  const formIdFromRaw = typeof raw[2] === 'string' ? raw[2] : '';
+  for (const idx of [1, 8, 3, 6]) {
+    const v = fb[idx];
+    if (typeof v === 'string' && v && v !== formIdFromRaw && v.length < 300 && !v.startsWith('1FAIpQL')) {
+      title = v; break;
+    }
+  }
+  if (!title) title = 'Formulario sin título';
+
+  // Description: first string in fb that isn't the title or a formId
+  let desc = '';
+  for (const idx of [0, 2, 12]) {
+    const v = fb[idx];
+    if (typeof v === 'string' && v && v !== title && !v.startsWith('1FAIpQL') && v.length < 2000) {
+      desc = v; break;
+    }
+  }
+
+  // ── New approach: walk entire raw tree looking for entry IDs ──
+  // An "entry" is an array whose first element is a large integer (Google Forms entry ID).
+  // A "question" is a node like [number, "label", ?, type, entriesArray, ...].
+  // We scan everything without assuming fixed positions.
+  const seenIds = new Set();
+  const fields  = [];
+  walkForFields(raw, fields, seenIds, 0);
+
+  if (!fields.length) {
+    // Debug hint in console to help trace structure
+    console.warn('[GFI] parseForm: no fields found. raw[1] keys with types:',
+      fb.map((v, i) => `[${i}]=${Array.isArray(v)?'Array('+v.length+')':typeof v}`).join(', '));
+    throw new Error('El formulario no tiene campos con entry ID detectables. Revisa la consola del navegador (F12) para ver la estructura recibida.');
+  }
+  return { title, desc, fields };
+}
+
+// Returns true if n looks like a Google Forms entry ID (9-10 digit integer)
+function isEntryId(n) {
+  return typeof n === 'number' && Number.isInteger(n) && n >= 10000000;
+}
+
+// Recursively walk the data tree.
+// When a node looks like a question, extract its entries.
+function walkForFields(node, fields, seenIds, depth) {
+  if (depth > 14 || !Array.isArray(node)) return;
+
+  // Does this node look like a question?
+  // Pattern: [anyNumber, "non-empty label", any, typeNumber, ...]
+  // We intentionally don't require entries at [4] since the position can vary.
+  if (
+    node.length >= 4 &&
+    typeof node[0] === 'number' &&
+    typeof node[1] === 'string' && node[1].trim() !== '' &&
+    typeof node[3] === 'number' && node[3] >= 0 && node[3] <= 12
+  ) {
+    const label = node[1].trim();
+    const type  = node[3];
+    const qDesc = typeof node[2] === 'string' ? node[2] : '';
+
+    // Look for entry arrays in node[4] through node[7]
+    for (let ei = 4; ei <= 7; ei++) {
+      if (!Array.isArray(node[ei])) continue;
+      for (const entry of node[ei]) {
+        if (!Array.isArray(entry) || !isEntryId(entry[0])) continue;
+        if (seenIds.has(entry[0])) continue;
+        seenIds.add(entry[0]);
+
+        const required = entry[2] === 1;
+        // Options can be at entry[4] (standard) or entry[3] (some versions)
+        let opts = [];
+        for (const oi of [4, 3]) {
+          if (Array.isArray(entry[oi])) {
+            opts = entry[oi]
+              .filter(o => Array.isArray(o) && typeof o[0] === 'string' && o[0] !== '')
+              .map(o => o[0]);
+            if (opts.length) break;
+          }
+        }
+
+        fields.push({ label, type, entryId: entry[0], name: `entry.${entry[0]}`, desc: qDesc, required, options: opts });
+      }
+    }
+    // Don't return — keep recursing in case of nested grids/sub-questions
+  }
+
+  for (const child of node) {
+    walkForFields(child, fields, seenIds, depth + 1);
+  }
+}
+
+// (kept for compatibility; no longer called by parseForm)
+function findQuestionsDeep(node, depth = 0) {
+  if (depth > 6 || !Array.isArray(node)) return null;
+  const hits = node.filter(x =>
+    Array.isArray(x) && typeof x[1] === 'string' && typeof x[3] === 'number' && Array.isArray(x[4])
+  );
+  if (hits.length > 0) return hits;
+  for (const child of node) {
+    const r = findQuestionsDeep(child, depth + 1);
+    if (r) return r;
+  }
+  return null;
+}
+
+// ─── Render results ───────────────────────────────────────────────────────────
+// shortUrl: URL acortada original (forms.gle/…), o null si no aplica
+function render(formData, viewformUrl, shortUrl) {
+  _endpoint = viewformUrl.replace('/viewform', '/formResponse');
+
+  document.getElementById('resTitle').textContent = formData.title;
+  const descEl = document.getElementById('resDesc');
+  if (formData.desc) { descEl.textContent = formData.desc; descEl.style.display = ''; }
+  else descEl.style.display = 'none';
+
+  // Indicador de URL resuelta para enlaces acortados
+  const shortNotice = document.getElementById('resShortNotice');
+  if (shortUrl) {
+    shortNotice.style.display = '';
+    document.getElementById('resShortFrom').textContent = shortUrl;
+    document.getElementById('resShortTo').textContent   = viewformUrl;
+  } else {
+    shortNotice.style.display = 'none';
+  }
+
+  document.getElementById('resEndpoint').textContent = _endpoint;
+  document.getElementById('resCount').textContent =
+    `${formData.fields.length} campo${formData.fields.length !== 1 ? 's' : ''} encontrado${formData.fields.length !== 1 ? 's' : ''}`;
+
+  // Table
+  const tbody = document.getElementById('fieldsTbody');
+  tbody.innerHTML = '';
+  formData.fields.forEach((f, i) => {
+    const qt = Q[f.type] || { name:`Tipo ${f.type}`, html:'—', badge:'b-other', icon:'fa-question', fmt:'—' };
+    const optsHtml = f.options.length
+      ? `<div class="opts">${f.options.map(o => `<span class="opt-tag">${esc(o)}</span>`).join('')}</div>`
+      : `<span class="fmt-hint">${qt.fmt}</span>`;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--gray-400);font-size:.8rem">${i + 1}</td>
+      <td>
+        <div class="f-label">${esc(f.label)}${f.required ? ' <span style="color:var(--error)">*</span>' : ''}</div>
+        ${f.desc ? `<div class="f-desc">${esc(f.desc)}</div>` : ''}
+      </td>
+      <td>
+        <span class="entry-chip" title="Clic para copiar" onclick="copyText('${f.name}')">${f.name}</span>
+      </td>
+      <td><span class="badge ${qt.badge}"><i class="fa-solid ${qt.icon}"></i> ${qt.name}</span></td>
+      <td class="code-sm">${qt.html}</td>
+      <td>${optsHtml}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // JSON export
+  const jsonMap = {
+    formTitle: formData.title,
+    endpoint: _endpoint,
+    fields: Object.fromEntries(formData.fields.map(f => {
+      const qt = Q[f.type] || {};
+      const val = { label: f.label, entry: f.name, type: qt.name || `type_${f.type}`, htmlInput: qt.html || '?', required: f.required };
+      if (f.options.length) val.options = f.options;
+      return [slug(f.label), val];
+    })),
+    hiddenFields: { fvv: '1', pageHistory: '0', submit: 'Submit' },
+  };
+  document.getElementById('jsonOut').textContent = JSON.stringify(jsonMap, null, 2);
+
+  // HTML export
+  const fieldLines = formData.fields.map(f => {
+    const req = f.required ? ' required' : '';
+    const comment = `<!-- ${esc(f.label)}${f.required ? ' (obligatorio)' : ''} -->`;
+    if (f.type === 0)  return `${comment}\n<input type="text" name="${f.name}" placeholder=""${req} />`;
+    if (f.type === 1)  return `${comment}\n<textarea name="${f.name}"${req}></textarea>`;
+    if (f.type === 9)  return `${comment}\n<input type="date" name="${f.name}"${req} />`;
+    if (f.type === 10) return `${comment}\n<input type="time" name="${f.name}"${req} />`;
+    if (f.type === 2 || f.type === 4) {
+      const tag = f.type === 2 ? 'radio' : 'checkbox';
+      const lines = f.options.map(o => `  <label><input type="${tag}" name="${f.name}" value="${escA(o)}" /> ${esc(o)}</label>`);
+      return `${comment}\n${lines.join('\n')}`;
+    }
+    if (f.type === 3) {
+      const opts = f.options.map(o => `  <option value="${escA(o)}">${esc(o)}</option>`).join('\n');
+      return `${comment}\n<select name="${f.name}"${req}>\n  <option value="">Selecciona...</option>\n${opts}\n</select>`;
+    }
+    return `${comment}\n<input type="text" name="${f.name}"${req} />`;
+  }).join('\n\n');
+
+  document.getElementById('htmlOut').textContent =
+`<form action="${_endpoint}" method="POST">
+
+${fieldLines}
+
+  <!-- Campos ocultos requeridos -->
+  <input type="hidden" name="fvv" value="1" />
+  <input type="hidden" name="pageHistory" value="0" />
+  <input type="hidden" name="submit" value="Submit" />
+
+  <button type="submit">Enviar</button>
+</form>`;
+
+  document.getElementById('results').classList.add('show');
+  setTimeout(() => document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+async function analyzeForm() {
+  const urlEl = document.getElementById('formUrl');
+  const url   = urlEl.value.trim();
+
+  // Reset
+  urlEl.classList.remove('err');
+  document.getElementById('urlErr').classList.remove('show');
+  document.getElementById('loadBanner').classList.remove('show');
+  document.getElementById('errBanner').classList.remove('show');
+  document.getElementById('results').classList.remove('show');
+
+  if (!url) { return showUrlErr('Por favor ingresa una URL de Google Forms.'); }
+  if (!isGoogleForms(url)) { return showUrlErr('La URL no corresponde a Google Forms. Debe contener docs.google.com/forms/'); }
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Analizando…';
+  document.getElementById('loadBanner').classList.add('show');
+
+  try {
+    // Para URLs acortadas (forms.gle) enviamos la URL tal cual al proxy;
+    // éste sigue el redirect y nos devuelve la URL real en resolvedUrl.
+    const fetchUrl = isShortened(url) ? url : toViewformUrl(url);
+    const { html, resolvedUrl } = await fetchHtml(fetchUrl);
+
+    // Determinar la viewform URL definitiva a partir de la URL resuelta
+    let viewformUrl;
+    try {
+      viewformUrl = toViewformUrl(resolvedUrl);
+    } catch {
+      // resolvedUrl todavía no resoluble (proxy sin redirect info)
+      viewformUrl = isShortened(url) ? url : toViewformUrl(url);
+    }
+
+    const raw  = extractFbData(html);
+    const form = parseForm(raw);
+    render(form, viewformUrl, isShortened(url) ? resolvedUrl : null);
+  } catch (e) {
+    showErr('Error al analizar el formulario', e.message);
+  } finally {
+    document.getElementById('loadBanner').classList.remove('show');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Analizar';
+  }
+}
+
+// ─── UI helpers ───────────────────────────────────────────────────────────────
+function showUrlErr(msg) {
+  const el = document.getElementById('urlErr');
+  el.textContent = msg;
+  el.classList.add('show');
+  document.getElementById('formUrl').classList.add('err');
+}
+function showErr(title, msg) {
+  document.getElementById('errTitle').textContent = title;
+  document.getElementById('errMsg').textContent   = msg;
+  document.getElementById('errBanner').classList.add('show');
+}
+
+// ─── Copy helpers ─────────────────────────────────────────────────────────────
+let _toastTimer;
+function showToast(msg) {
+  document.getElementById('toastMsg').textContent = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => showToast('Copiado: ' + (text.length > 40 ? text.slice(0,40)+'…' : text)));
+}
+function copyEl(id) {
+  copyText(document.getElementById(id).textContent);
+  showToast('Copiado al portapapeles');
+}
+
+// ─── Utils ───────────────────────────────────────────────────────────────────
+function esc(s)  { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escA(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+function slug(s) { return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,''); }
+
+// Enter key
+document.getElementById('formUrl').addEventListener('keydown', e => { if (e.key === 'Enter') analyzeForm(); });
+</script>
+</body>
+</html>

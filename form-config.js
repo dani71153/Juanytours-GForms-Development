@@ -41,6 +41,7 @@ function closeTab(id) {
     activateTab(next ? next.id : 'library');
   } else {
     renderTabBar();
+    if (typeof persistInspectorState === 'function') persistInspectorState();
   }
 }
 
@@ -55,6 +56,7 @@ function activateTab(id) {
     libPanel.style.display = '';
     resPanel.style.display = 'none';
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof persistInspectorState === 'function') persistInspectorState();
     return;
   }
 
@@ -67,6 +69,8 @@ function activateTab(id) {
   document.getElementById('results').classList.remove('show');
   const saveBtn = document.getElementById('saveTriggerBtn');
   if (saveBtn) saveBtn.style.display = 'none';
+  const prevBtn = document.getElementById('previewBtn');
+  if (prevBtn) prevBtn.style.display = 'none';
 
   const tab = _tabs.find(t => t.id === id);
   if (!tab) return;
@@ -80,6 +84,7 @@ function activateTab(id) {
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (typeof persistInspectorState === 'function') persistInspectorState();
 }
 
 function renderTabBar() {
@@ -111,6 +116,28 @@ function saveActiveForm() {
   if (tab && tab.formData) openSaveDialog(tab.formData, tab.viewformUrl);
 }
 
+function getStableViewformUrl(tabOrData, maybeUrl) {
+  const formData = maybeUrl ? tabOrData : tabOrData.formData;
+  const viewformUrl = maybeUrl || tabOrData.viewformUrl;
+  if (formData && formData.formId && !String(viewformUrl || '').includes('/forms/d/e/')) {
+    return toPublishedViewformUrl(formData.formId);
+  }
+  return viewformUrl;
+}
+
+function openPreview() {
+  const tab = _tabs.find(t => t.id === _activeId);
+  if (!tab || !tab.formData) return;
+  const viewformUrl = getStableViewformUrl(tab);
+  localStorage.setItem('gfi:preview', JSON.stringify({
+    title:    tab.formData.title,
+    desc:     tab.formData.desc || '',
+    endpoint: toFormResponseUrl(viewformUrl),
+    fields:   tab.formData.fields,
+  }));
+  window.open('forms-previsualizer/index.html', '_blank');
+}
+
 // ─── URL helpers ─────────────────────────────────────────────────────────────
 function isGoogleForms(url) {
   try {
@@ -130,6 +157,20 @@ function extractCanonical(html) {
   const m = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i)
          || html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']canonical["']/i);
   return m ? m[1] : null;
+}
+
+function extractPublishedFormId(html) {
+  const m = String(html || '').match(/1FAIpQL[A-Za-z0-9_-]+/);
+  return m ? m[0] : null;
+}
+
+function toPublishedViewformUrl(formId) {
+  return `https://docs.google.com/forms/d/e/${formId}/viewform`;
+}
+
+function toFormResponseUrl(viewformUrl) {
+  const normalized = toViewformUrl(viewformUrl);
+  return normalized.replace(/\/viewform(?:\?.*)?$/, '/formResponse');
 }
 
 function toViewformUrl(raw) {
@@ -246,7 +287,8 @@ function parseForm(raw) {
       fb.map((v, i) => `[${i}]=${Array.isArray(v) ? 'Array(' + v.length + ')' : typeof v}`).join(', '));
     throw new Error('El formulario no tiene campos con entry ID detectables. Revisa la consola del navegador (F12) para ver la estructura recibida.');
   }
-  return { title, desc, fields };
+  const formId = formIdFromRaw && formIdFromRaw.startsWith('1FAIpQL') ? formIdFromRaw : '';
+  return { title, desc, fields, formId };
 }
 
 function isEntryId(n) {
@@ -295,10 +337,13 @@ function walkForFields(node, fields, seenIds, depth) {
 
 // ─── Render results ───────────────────────────────────────────────────────────
 function render(formData, viewformUrl, shortUrl) {
-  _endpoint = viewformUrl.replace('/viewform', '/formResponse');
+  viewformUrl = getStableViewformUrl(formData, viewformUrl);
+  _endpoint = toFormResponseUrl(viewformUrl);
 
   const saveTrigger = document.getElementById('saveTriggerBtn');
   if (saveTrigger) saveTrigger.style.display = '';
+  const previewTrigger = document.getElementById('previewBtn');
+  if (previewTrigger) previewTrigger.style.display = '';
 
   document.getElementById('resTitle').textContent = formData.title;
   const descEl = document.getElementById('resDesc');
@@ -427,11 +472,26 @@ async function analyzeForm() {
     const fetchUrl = isShortened(url) ? url : toViewformUrl(url);
     const { html, resolvedUrl } = await fetchHtml(fetchUrl);
 
-    let viewformUrl;
-    try { viewformUrl = toViewformUrl(resolvedUrl); }
-    catch { viewformUrl = isShortened(url) ? url : toViewformUrl(url); }
-
     const raw      = extractFbData(html);
+
+    let viewformUrl;
+    const publishedFormId = extractPublishedFormId(html) || extractPublishedFormId(JSON.stringify(raw));
+    if (publishedFormId) {
+      viewformUrl = toPublishedViewformUrl(publishedFormId);
+    } else {
+      try { viewformUrl = toViewformUrl(resolvedUrl); }
+      catch { viewformUrl = isShortened(url) ? url : toViewformUrl(url); }
+    }
+
+    // If the URL didn't resolve to a full Google Forms path (e.g. forms.gle proxy
+    // didn't follow the redirect), fall back to the canonical URL in the HTML.
+    if (!viewformUrl.includes('/forms/d/e/')) {
+      const canonical = extractCanonical(html);
+      if (canonical && canonical.includes('/forms/d/e/')) {
+        try { viewformUrl = toViewformUrl(canonical); } catch { /* keep current */ }
+      }
+    }
+
     const formData = parseForm(raw);
     const shortUrl = isShortened(url) ? resolvedUrl : null;
 
@@ -443,12 +503,14 @@ async function analyzeForm() {
 
     renderTabBar();
     render(formData, viewformUrl, shortUrl);
+    if (typeof persistInspectorState === 'function') persistInspectorState();
   } catch (e) {
     tab.title  = 'Error';
     tab.status = 'error';
     tab.error  = e.message;
     renderTabBar();
     showErr('Error al analizar el formulario', e.message);
+    if (typeof persistInspectorState === 'function') persistInspectorState();
   } finally {
     document.getElementById('loadBanner').classList.remove('show');
     btn.disabled = false;
@@ -502,3 +564,6 @@ function slug(s) { return String(s || '').toLowerCase().normalize('NFD').replace
 
 // Enter key
 document.getElementById('formUrl').addEventListener('keydown', e => { if (e.key === 'Enter') analyzeForm(); });
+document.getElementById('formUrl').addEventListener('input', () => {
+  if (typeof persistInspectorState === 'function') persistInspectorState();
+});

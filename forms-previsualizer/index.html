@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vista Previa | Google Forms Inspector</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="preview.css" />
+</head>
+<body>
+
+  <!-- Preview mode bar -->
+  <div class="pv-mode-bar">
+    <i class="fa-solid fa-flask-vial"></i>
+    <span>Modo vista previa — los envíos se registran en <strong>Google Forms real</strong></span>
+    <button class="pv-mode-bar__link pv-mode-bar__button" type="button" onclick="clearPreviewStorage()">
+      <i class="fa-solid fa-broom"></i> Limpiar cache
+    </button>
+    <a class="pv-mode-bar__link" href="../form-config.html">
+      <i class="fa-solid fa-arrow-left"></i> Volver al inspector
+    </a>
+  </div>
+
+  <!-- No-data error screen (hidden by default, shown by JS if needed) -->
+  <div class="pv-no-data" id="pvNoData" style="display:none">
+    <div class="pv-no-data__icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+    <h2>Sin datos de formulario</h2>
+    <p>Abre un formulario en el inspector y haz clic en <strong>Vista previa</strong> para cargarlo aquí.</p>
+    <div class="pv-no-data__actions">
+      <a class="pv-btn pv-btn--primary" href="../form-config.html">
+        <i class="fa-solid fa-magnifying-glass"></i> Ir al inspector
+      </a>
+      <button class="pv-btn pv-btn--secondary" type="button" onclick="clearPreviewStorage()">
+        <i class="fa-solid fa-broom"></i> Limpiar cache
+      </button>
+    </div>
+  </div>
+
+  <!-- Main shell -->
+  <main class="pv-page" id="pvPage" style="display:none">
+    <section class="pv-shell">
+
+      <!-- Left info panel -->
+      <aside class="pv-panel">
+        <div class="pv-panel__top">
+          <div class="pv-panel__badge">
+            <i class="fa-solid fa-magnifying-glass-chart"></i> Google Forms Inspector
+          </div>
+          <h1 class="pv-panel__title" id="pvTitle">Cargando…</h1>
+          <p class="pv-panel__desc" id="pvDesc"></p>
+        </div>
+
+        <div class="pv-panel__stats" id="pvStats">
+          <!-- Filled by preview.js -->
+        </div>
+
+        <div class="pv-panel__footer">
+          <div class="pv-panel__notice">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Envíos van directamente a Google Forms</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right form panel -->
+      <div class="pv-form-wrap">
+        <header class="pv-form-head">
+          <div>
+            <h2 class="pv-form-head__title" id="pvFormTitle">Formulario</h2>
+            <p class="pv-form-head__sub" id="pvFormSub"></p>
+          </div>
+          <span class="pv-badge" id="pvFieldCount"></span>
+        </header>
+
+        <!-- Status messages — above the form so siempre son visibles al enviar -->
+        <div class="pv-success" id="pvSuccess" role="status" aria-live="polite">
+          <i class="fa-solid fa-circle-check"></i>
+          <div>
+            <strong>¡Enviado correctamente!</strong>
+            <span>La respuesta fue registrada en Google Forms.</span>
+          </div>
+        </div>
+        <div class="pv-error" id="pvError" role="alert" aria-live="polite">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <div>
+            <strong>Error al enviar</strong>
+            <span id="pvErrorMsg">Revisa tu conexión e intenta nuevamente.</span>
+          </div>
+        </div>
+
+        <!-- Dynamic form — built by preview.js -->
+        <form class="pv-form" id="pvForm">
+          <!-- Fields injected here -->
+        </form>
+      </div>
+
+    </section>
+  </main>
+
+  <script src="preview.js"></script>
+</body>
+</html>

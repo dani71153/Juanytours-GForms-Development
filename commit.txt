@@ -1,16 +1,24 @@
-form-config.html — reescrito. El body ahora tiene tres zonas: navbar, tab-bar, y content. Ya no hay .page wrapper ni el antiguo header.
+form-config.html - reescrito. El body ahora tiene tres zonas: navbar, tab-bar y content. Ya no hay .page wrapper ni el antiguo header.
 
-form-config.css — el bloque .hdr fue reemplazado por .navbar + .nav-brand + .nav-analyze + .nav-url-input. Se añadieron .tab-bar, .tab, .tab--active, .tab--pinned, .tab-close. El .url-err ahora es un tooltip absoluto que flota bajo el input del navbar. El .content reemplaza a .page con max-width: 960px.
+form-config.css - el bloque .hdr fue reemplazado por .navbar + .nav-brand + .nav-analyze + .nav-url-input. Se anadieron .tab-bar, .tab, .tab--active, .tab--pinned y .tab-close. El .url-err ahora es un tooltip absoluto que flota bajo el input del navbar. El .content reemplaza a .page con max-width: 960px.
 
-form-config.js — se añadió el estado de pestañas (_tabs, _activeId, _tabSeq, MAX_TABS = 8) y las funciones createFormTab, closeTab, activateTab, renderTabBar, saveActiveForm. analyzeForm() ahora crea una pestaña antes de hacer el fetch, actualiza su estado al terminar, y detecta si la URL ya está abierta. render() ya no toca scrollIntoView ni variables globales de formulario activo.
+form-config.js - se anadio el estado de pestanas (_tabs, _activeId, _tabSeq, MAX_TABS = 8) y las funciones createFormTab, closeTab, activateTab, renderTabBar y saveActiveForm. analyzeForm() ahora crea una pestana antes de hacer el fetch, actualiza su estado al terminar y detecta si la URL ya esta abierta. render() ya no toca scrollIntoView ni variables globales de formulario activo.
 
-form-db.js — loadSaved() ahora crea una pestaña en estado ready con los datos del registro en lugar de llamar render() directamente, y detecta si ya está abierta.
+form-config.js - tambien normaliza endpoints de Google Forms de forma mas robusta: extrae el ID publicado 1FAIpQL... desde el HTML/FB_PUBLIC_LOAD_DATA_ y construye /forms/d/e/.../formResponse, evitando URLs invalidas derivadas de forms.gle. Ademas expone el boton "Vista previa" y guarda el estado relevante con persistInspectorState().
+
+form-db.js - loadSaved() ahora crea una pestana en estado ready con los datos del registro en lugar de llamar render() directamente, detecta si ya esta abierta y persiste el estado cuando carga desde biblioteca.
+
+persistencia.js - nuevo archivo dedicado a persistir el estado del inspector en localStorage. Guarda pestanas listas, pestana activa, secuencia de pestanas y el valor del input de URL. Restaura ese estado al recargar form-config.html sin mezclarlo con la cache de vista previa.
+
+forms-previsualizer/ - se agrego la vista previa personalizada del formulario. Construye los campos desde la configuracion analizada, envia a Google Forms con fetch no-cors y muestra estados de exito/error. Incluye un boton sutil "Limpiar cache" para borrar gfi:preview cuando haya datos viejos en localStorage.
 
 Comportamiento completo:
 
-Pestaña "Biblioteca" siempre fija a la izquierda, sin botón de cerrar
-Cada URL analizada → nueva pestaña con el título del formulario
-Si la misma URL ya está abierta → activa esa pestaña y muestra toast
-Cerrar pestaña con × → activa la adyacente o vuelve a Biblioteca
-Cargar desde biblioteca → abre pestaña propia
-Máximo 8 formularios abiertos simultáneamente
+Pestana "Biblioteca" siempre fija a la izquierda, sin boton de cerrar
+Cada URL analizada -> nueva pestana con el titulo del formulario
+Si la misma URL ya esta abierta -> activa esa pestana y muestra toast
+Cerrar pestana con X -> activa la adyacente o vuelve a Biblioteca
+Cargar desde biblioteca -> abre pestana propia
+Maximo 8 formularios abiertos simultaneamente
+Recargar la pagina -> restaura pestanas listas, tab activo y URL escrita
+Vista previa -> usa endpoint canonico y permite limpiar su cache local

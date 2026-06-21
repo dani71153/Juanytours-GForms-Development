@@ -121,6 +121,10 @@
                   onclick="saveActiveForm()">
             <i class="fa-solid fa-floppy-disk"></i> Guardar en biblioteca
           </button>
+          <button id="previewBtn" class="btn-save-lib btn-preview" style="display:none"
+                  onclick="openPreview()">
+            <i class="fa-solid fa-eye"></i> Vista previa
+          </button>
         </div>
       </div>
 
@@ -249,6 +253,7 @@
 <input type="file" id="importFileInput" accept=".json" style="display:none"
        onchange="handleImport(event)" />
 
+<script src="persistencia.js"></script>
 <script src="form-config.js"></script>
 <script src="form-db.js"></script>
 </body>

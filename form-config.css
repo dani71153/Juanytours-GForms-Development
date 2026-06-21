@@ -408,6 +408,12 @@ td { padding: .9rem 1rem; vertical-align: top; }
   cursor: pointer; transition: background .15s;
 }
 .btn-save-lib:hover { background: rgba(255,255,255,.18); }
+.btn-preview {
+  border-color: rgba(13,154,148,.5);
+  background: rgba(13,154,148,.15);
+  color: rgba(255,255,255,.92);
+}
+.btn-preview:hover { background: rgba(13,154,148,.28); }
 .form-info-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .15rem; }
 
 /* ── Save modal ── */

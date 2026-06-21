@@ -239,6 +239,7 @@ async function loadSaved(id) {
   activateTab(tabId);
 
   document.getElementById('formUrl').value = record.url;
+  if (typeof persistInspectorState === 'function') persistInspectorState();
   showToast(`"${record.alias}" cargado desde la biblioteca`);
 }
 

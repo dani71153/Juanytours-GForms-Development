@@ -71,6 +71,8 @@ function activateTab(id) {
   if (saveBtn) saveBtn.style.display = 'none';
   const prevBtn = document.getElementById('previewBtn');
   if (prevBtn) prevBtn.style.display = 'none';
+  const editorBtn = document.getElementById('editorBtn');
+  if (editorBtn) editorBtn.style.display = 'none';
 
   const tab = _tabs.find(t => t.id === id);
   if (!tab) return;
@@ -129,13 +131,72 @@ function openPreview() {
   const tab = _tabs.find(t => t.id === _activeId);
   if (!tab || !tab.formData) return;
   const viewformUrl = getStableViewformUrl(tab);
-  localStorage.setItem('gfi:preview', JSON.stringify({
+  const editedPreview = getEditedPreviewConfig(viewformUrl);
+  localStorage.setItem('gfi:preview', JSON.stringify(editedPreview || {
     title:    tab.formData.title,
     desc:     tab.formData.desc || '',
     endpoint: toFormResponseUrl(viewformUrl),
     fields:   tab.formData.fields,
   }));
   window.open('forms-previsualizer/index.html', '_blank');
+}
+
+function openEditor() {
+  const tab = _tabs.find(t => t.id === _activeId);
+  if (!tab || !tab.formData) return;
+  const viewformUrl = getStableViewformUrl(tab);
+  const endpoint = toFormResponseUrl(viewformUrl);
+  const existingEditor = getEditorConfigFor(viewformUrl, endpoint);
+  if (!existingEditor) {
+    localStorage.setItem('gfi:editor', JSON.stringify({
+      title: tab.formData.title,
+      desc: tab.formData.desc || '',
+      endpoint,
+      sourceUrl: viewformUrl,
+      fields: tab.formData.fields,
+    }));
+  }
+  window.open('EditorForms/index.html', '_blank');
+}
+
+function getEditorConfigFor(viewformUrl, endpoint) {
+  try {
+    const editorConfig = JSON.parse(localStorage.getItem('gfi:editor') || 'null');
+    if (!editorConfig) return null;
+    if (editorConfig.sourceUrl === viewformUrl || editorConfig.endpoint === endpoint) return editorConfig;
+  } catch { /* ignore invalid editor cache */ }
+  return null;
+}
+
+function getEditedPreviewConfig(viewformUrl) {
+  const endpoint = toFormResponseUrl(viewformUrl);
+  const editorConfig = getEditorConfigFor(viewformUrl, endpoint);
+  if (!editorConfig || !Array.isArray(editorConfig.fields)) return null;
+
+  return {
+    title: editorConfig.title,
+    desc: editorConfig.desc || '',
+    endpoint: editorConfig.endpoint || endpoint,
+    fields: editorConfig.fields
+      .filter(field => !(field.edit && field.edit.hidden) && !field.hidden)
+      .map(field => {
+        const edit = field.edit || {};
+        return {
+          ...field,
+          label: edit.label || field.label,
+          placeholder: edit.placeholder || field.placeholder || '',
+          renderAs: edit.renderAs || field.renderAs,
+          width: edit.width || field.width,
+          options: normalizePreviewOptions(field.options || []),
+        };
+      }),
+  };
+}
+
+function normalizePreviewOptions(options) {
+  return options
+    .map(option => typeof option === 'string' ? option : (option.value || option.label || ''))
+    .filter(Boolean);
 }
 
 // ─── URL helpers ─────────────────────────────────────────────────────────────
@@ -369,6 +430,8 @@ function render(formData, viewformUrl, shortUrl) {
   if (saveTrigger) saveTrigger.style.display = '';
   const previewTrigger = document.getElementById('previewBtn');
   if (previewTrigger) previewTrigger.style.display = '';
+  const editorTrigger = document.getElementById('editorBtn');
+  if (editorTrigger) editorTrigger.style.display = '';
 
   document.getElementById('resTitle').textContent = formData.title;
   const descEl = document.getElementById('resDesc');

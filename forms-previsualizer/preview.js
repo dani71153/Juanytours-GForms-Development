@@ -16,6 +16,11 @@ const FIELD_TYPES = {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  loadPreviewFromStorage();
+  bindPreviewSync();
+});
+
+function loadPreviewFromStorage() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) { showNoData(); return; }
 
@@ -26,7 +31,20 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!config.fields || !config.fields.length) { showNoData(); return; }
 
   buildPage(config);
-});
+}
+
+function bindPreviewSync() {
+  window.addEventListener('storage', event => {
+    if (event.key === STORAGE_KEY) loadPreviewFromStorage();
+  });
+
+  if ('BroadcastChannel' in window) {
+    const channel = new BroadcastChannel('gfi-preview');
+    channel.addEventListener('message', event => {
+      if (event.data && event.data.type === 'preview:update') loadPreviewFromStorage();
+    });
+  }
+}
 
 // ─── Build page ───────────────────────────────────────────────────────────────
 function buildPage(config) {
@@ -103,7 +121,9 @@ function fillFormHeader(config) {
 // Mirrors forms_1.html structure: action + method on the form element,
 // hidden fields as DOM children of the form, actions outside the field grid.
 function buildForm(config) {
-  const form = document.getElementById('pvForm');
+  const oldForm = document.getElementById('pvForm');
+  const form = oldForm.cloneNode(false);
+  oldForm.replaceWith(form);
 
   form.action = config.endpoint;
   form.method = 'POST';
@@ -158,7 +178,7 @@ function buildForm(config) {
 // ─── Single field builder ─────────────────────────────────────────────────────
 function buildField(field) {
   const info   = FIELD_TYPES[field.type];
-  const isFull = info ? !info.isHalf : true;
+  const isFull = field.width === 'full' || (field.width !== 'half' && (info ? !info.isHalf : true));
 
   const wrapper     = document.createElement('div');
   wrapper.className = `pv-field${isFull ? ' pv-field--full' : ''}`;
@@ -175,7 +195,14 @@ function buildField(field) {
     wrapper.appendChild(hint);
   }
 
-  switch (field.type) {
+  switch (field.renderAs || field.type) {
+    case 'text':     buildText(wrapper, field);                     break;
+    case 'textarea': buildTextarea(wrapper, field);                 break;
+    case 'radio':    buildOptions(wrapper, field, 'radio');         break;
+    case 'checkbox': buildOptions(wrapper, field, 'checkbox');      break;
+    case 'select':   buildSelect(wrapper, field);                   break;
+    case 'date':     buildDateOrTime(wrapper, field, 'date');       break;
+    case 'time':     buildDateOrTime(wrapper, field, 'time');       break;
     case 0:  buildText(wrapper, field);                      break;
     case 1:  buildTextarea(wrapper, field);                  break;
     case 2:  buildOptions(wrapper, field, 'radio');          break;
@@ -195,6 +222,7 @@ function buildText(wrapper, field) {
   inp.type     = 'text';
   inp.name     = field.name;
   inp.id       = `f_${field.entryId}`;
+  inp.placeholder = field.placeholder || '';
   inp.required = !!field.required;
   wrapper.appendChild(inp);
 }
@@ -203,6 +231,7 @@ function buildTextarea(wrapper, field) {
   const ta    = document.createElement('textarea');
   ta.name     = field.name;
   ta.id       = `f_${field.entryId}`;
+  ta.placeholder = field.placeholder || '';
   ta.required = !!field.required;
   ta.rows     = 4;
   wrapper.appendChild(ta);
@@ -218,6 +247,7 @@ function buildSelect(wrapper, field) {
   placeholder.setAttribute('value', '');
   placeholder.textContent = 'Selecciona una opción…';
   placeholder.disabled = true;
+  if (field.placeholder) placeholder.textContent = field.placeholder;
   placeholder.selected = true;
   placeholder.hidden   = true;
   sel.appendChild(placeholder);

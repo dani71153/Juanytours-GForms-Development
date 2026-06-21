@@ -16,6 +16,18 @@ persistencia.js - nuevo archivo dedicado a persistir el estado del inspector en 
 
 forms-previsualizer/ - se agrego la vista previa personalizada del formulario. Construye los campos desde la configuracion analizada, envia a Google Forms con fetch no-cors y muestra estados de exito/error. Incluye un boton sutil "Limpiar cache" para borrar gfi:preview cuando haya datos viejos en localStorage.
 
+EditorForms/ - nueva primera version del editor visual. Carga el formulario activo desde gfi:editor, muestra una lista de campos, una previsualizacion editable y un panel de propiedades. Permite cambiar texto visible, placeholder, render visual del campo, ancho y visibilidad sin modificar entry.ID ni endpoint. Puede guardar cambios y enviar la configuracion editada a la vista previa.
+
+EditorForms/editor.js - el boton Guardar ahora sincroniza tambien gfi:preview, para que la previsualizacion use los cambios editados sin depender solo del boton Vista previa.
+
+EditorForms/editor.js y forms-previsualizer/preview.js - la previsualizacion ahora escucha cambios en vivo desde el editor mediante localStorage/BroadcastChannel y reconstruye el formulario cuando se guarda. Al reconstruir, limpia el form anterior para evitar campos duplicados o listeners repetidos.
+
+form-config.js - openPreview() ahora revisa si existe una configuracion editada para el formulario activo en gfi:editor y la usa antes de caer al formulario original. openEditor() ya no pisa una edicion existente del mismo formulario al abrir el editor de nuevo.
+
+form-config.html/css/js - se agrego el boton "Editar" junto a "Guardar en biblioteca" y "Vista previa". openEditor() guarda el formulario activo en localStorage con la clave gfi:editor y abre EditorForms/index.html.
+
+forms-previsualizer/preview.js - ahora respeta overrides visuales enviados por el editor: renderAs, width y placeholder. Esto permite, por ejemplo, renderizar una opcion multiple como dropdown sin cambiar el name/entry real enviado a Google Forms.
+
 Comportamiento completo:
 
 Pestana "Biblioteca" siempre fija a la izquierda, sin boton de cerrar
@@ -26,3 +38,4 @@ Cargar desde biblioteca -> abre pestana propia
 Maximo 8 formularios abiertos simultaneamente
 Recargar la pagina -> restaura pestanas listas, tab activo y URL escrita
 Vista previa -> usa endpoint canonico y permite limpiar su cache local
+Editor -> permite ajustar la presentacion visual del formulario y reenviarla a vista previa

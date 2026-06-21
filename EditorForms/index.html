@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editor Forms | JuanyTours</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="editor.css" />
+</head>
+<body>
+  <nav class="ef-nav">
+    <div class="ef-brand">
+      <span class="ef-brand__icon"><i class="fa-solid fa-pen-ruler"></i></span>
+      <div>
+        <strong>Editor Forms</strong>
+        <span>JuanyTours</span>
+      </div>
+    </div>
+
+    <div class="ef-nav__actions">
+      <button class="ef-btn ef-btn--ghost" type="button" onclick="saveEditorConfig()">
+        <i class="fa-solid fa-floppy-disk"></i> Guardar
+      </button>
+      <button class="ef-btn ef-btn--ghost" type="button" onclick="sendToPreview()">
+        <i class="fa-solid fa-eye"></i> Vista previa
+      </button>
+      <a class="ef-btn ef-btn--ghost" href="../form-config.html">
+        <i class="fa-solid fa-arrow-left"></i> Inspector
+      </a>
+    </div>
+  </nav>
+
+  <main class="ef-empty" id="emptyState" style="display:none">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <h1>Sin formulario para editar</h1>
+    <p>Abre un formulario en el inspector y usa el boton Editar.</p>
+    <a class="ef-btn ef-btn--primary" href="../form-config.html">
+      <i class="fa-solid fa-magnifying-glass"></i> Ir al inspector
+    </a>
+  </main>
+
+  <main class="ef-app" id="editorApp" style="display:none">
+    <aside class="ef-sidebar">
+      <div class="ef-sidebar__head">
+        <span>Campos</span>
+        <strong id="fieldTotal">0</strong>
+      </div>
+      <div class="ef-field-list" id="fieldList"></div>
+    </aside>
+
+    <section class="ef-canvas">
+      <header class="ef-form-head">
+        <div>
+          <h1 id="formTitle">Formulario</h1>
+          <p id="formDesc"></p>
+        </div>
+        <span class="ef-pill" id="endpointPill">Endpoint</span>
+      </header>
+
+      <form class="ef-form" id="previewForm">
+        <div class="ef-grid" id="previewGrid"></div>
+      </form>
+    </section>
+
+    <aside class="ef-props">
+      <div class="ef-props__head">
+        <span>Propiedades</span>
+        <button class="ef-icon-btn" type="button" onclick="resetSelectedField()" title="Restaurar campo">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+      </div>
+
+      <div class="ef-props__empty" id="propsEmpty">
+        <i class="fa-solid fa-arrow-pointer"></i>
+        <p>Selecciona un campo para editarlo.</p>
+      </div>
+
+      <div class="ef-props__body" id="propsBody" style="display:none">
+        <label class="ef-control">
+          <span>Texto visible</span>
+          <input id="propLabel" type="text" />
+        </label>
+
+        <label class="ef-control">
+          <span>Placeholder</span>
+          <input id="propPlaceholder" type="text" />
+        </label>
+
+        <label class="ef-control">
+          <span>Render como</span>
+          <select id="propRenderAs"></select>
+        </label>
+
+        <label class="ef-control">
+          <span>Ancho</span>
+          <select id="propWidth">
+            <option value="half">Medio</option>
+            <option value="full">Completo</option>
+          </select>
+        </label>
+
+        <label class="ef-check">
+          <input id="propHidden" type="checkbox" />
+          <span>Ocultar campo</span>
+        </label>
+
+        <div class="ef-readonly">
+          <div>
+            <span>Entry ID</span>
+            <code id="propEntry"></code>
+          </div>
+          <div>
+            <span>Requerido</span>
+            <code id="propRequired"></code>
+          </div>
+        </div>
+
+        <div class="ef-options" id="propOptionsWrap" style="display:none">
+          <span>Opciones reales</span>
+          <div id="propOptions"></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="ef-toast" id="toast">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toastText">Guardado</span>
+  </div>
+
+  <script src="editor.js"></script>
+</body>
+</html>

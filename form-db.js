@@ -211,11 +211,34 @@ async function loadSaved(id) {
   const record = await dbGet(id);
   if (!record) return;
 
+  // Si ya está abierto en una pestaña, solo activarla
+  const existing = _tabs.find(t => t.viewformUrl === record.url);
+  if (existing) {
+    activateTab(existing.id);
+    showToast(`"${record.alias}" ya está abierto`);
+    return;
+  }
+
+  if (_tabs.length >= MAX_TABS) {
+    showToast(`Máximo ${MAX_TABS} formularios abiertos al mismo tiempo`);
+    return;
+  }
+
+  const tabId = `ft${++_tabSeq}`;
+  const tab = {
+    id:          tabId,
+    title:       record.alias || record.title,
+    status:      'ready',
+    formData:    { title: record.title, desc: record.desc || '', fields: record.fields },
+    viewformUrl: record.url,
+    shortUrl:    null,
+    error:       '',
+  };
+  _tabs.push(tab);
+  renderTabBar();
+  activateTab(tabId);
+
   document.getElementById('formUrl').value = record.url;
-
-  const formData = { title: record.title, desc: record.desc || '', fields: record.fields };
-  render(formData, record.url, null);
-
   showToast(`"${record.alias}" cargado desde la biblioteca`);
 }
 

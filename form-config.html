@@ -12,206 +12,199 @@
   <link rel="stylesheet" href="form-config.css" />
 </head>
 <body>
-<div class="page">
 
-  <!-- Header -->
-  <header class="hdr">
-    <div class="hdr-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
-    <div>
-      <h1>Google Forms Inspector</h1>
-      <p>Pega la URL de cualquier Google Form público para extraer todos sus campos
-        <code style="font-family:monospace;background:rgba(255,255,255,.12);padding:.1rem .35rem;border-radius:4px;font-size:.8em">entry.*</code>
-        y generar el código de integración.
-      </p>
+<!-- ── Navbar ── -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <div class="nav-brand-icon">
+      <i class="fa-solid fa-magnifying-glass-chart"></i>
     </div>
-  </header>
-
-  <!-- URL Input Card -->
-  <div class="card">
-    <div class="card-hdr">
-      <div class="card-hdr-icon"><i class="fa-brands fa-google"></i></div>
-      <h2>URL del formulario</h2>
+    <div class="nav-brand-text">
+      <span class="nav-title">Google Forms Inspector</span>
+      <span class="nav-sub">JuanyTours</span>
     </div>
-    <div class="card-body">
-      <label class="url-label" for="formUrl">Pega aquí la URL del Google Forms público</label>
-      <div class="url-row">
-        <input
-          class="url-input" id="formUrl" type="url"
-          placeholder="https://docs.google.com/forms/d/e/1FAIpQLSd.../viewform"
-          autocomplete="off" spellcheck="false"
-        />
-        <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeForm()">
-          <i class="fa-solid fa-magnifying-glass"></i> Analizar
-        </button>
-      </div>
+  </div>
+  <div class="nav-analyze">
+    <div class="nav-url-wrap">
+      <input
+        class="nav-url-input" id="formUrl" type="url"
+        placeholder="https://docs.google.com/forms/… o forms.gle/…"
+        autocomplete="off" spellcheck="false"
+      />
       <p class="url-err" id="urlErr"></p>
-      <p class="url-hint">
-        Formatos aceptados:
-        <code style="font-family:monospace;background:var(--gray-100);padding:.1rem .35rem;border-radius:4px;font-size:.85em">…/viewform</code>,
-        <code style="font-family:monospace;background:var(--gray-100);padding:.1rem .35rem;border-radius:4px;font-size:.85em">…/formResponse</code>,
-        URL de edición, o enlace acortado
-        <code style="font-family:monospace;background:var(--gray-100);padding:.1rem .35rem;border-radius:4px;font-size:.85em">forms.gle/…</code>
-      </p>
     </div>
+    <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeForm()">
+      <i class="fa-solid fa-magnifying-glass"></i> Analizar
+    </button>
   </div>
+</nav>
 
-  <!-- Loading -->
-  <div class="banner banner-load" id="loadBanner">
-    <i class="fa-solid fa-circle-notch spin"></i>
-    <div>
-      <strong>Obteniendo estructura del formulario…</strong>
-      <p>Conectando a través de proxy CORS. Puede tardar unos segundos.</p>
-    </div>
-  </div>
+<!-- ── Tab bar ── -->
+<div class="tab-bar" id="tabBar">
+  <button class="tab tab--pinned tab--active" onclick="activateTab('library')">
+    <i class="fa-solid fa-database"></i>
+    <span class="tab-title">Biblioteca</span>
+  </button>
+</div>
 
-  <!-- Error -->
-  <div class="banner banner-err" id="errBanner">
-    <i class="fa-solid fa-circle-exclamation"></i>
-    <div>
-      <strong id="errTitle">Error al analizar el formulario</strong>
-      <p id="errMsg"></p>
-    </div>
-  </div>
+<!-- ── Content ── -->
+<div class="content">
 
-  <!-- Results -->
-  <div id="results">
-
-    <!-- Form info -->
-    <div class="form-info">
-      <h3 id="resTitle"></h3>
-      <p id="resDesc" style="display:none"></p>
-
-      <!-- Aviso de URL acortada resuelta -->
-      <div id="resShortNotice" style="display:none;font-size:.75rem;color:rgba(255,255,255,.55);padding:.5rem .75rem;background:rgba(255,255,255,.07);border-radius:8px;border:1px solid rgba(255,255,255,.1)">
-        <i class="fa-solid fa-link" style="margin-right:.4rem;color:var(--teal)"></i>
-        Enlace acortado
-        <code id="resShortFrom" style="font-family:monospace;background:rgba(255,255,255,.1);padding:.05rem .3rem;border-radius:4px"></code>
-        resuelto a
-        <code id="resShortTo" style="font-family:monospace;background:rgba(255,255,255,.1);padding:.05rem .3rem;border-radius:4px;word-break:break-all"></code>
+  <!-- Library panel -->
+  <div id="panel-library">
+    <p class="url-hint-text">
+      Formatos aceptados:
+      <code>…/viewform</code>,
+      <code>…/formResponse</code>,
+      URL de edición o enlace acortado <code>forms.gle/…</code>
+    </p>
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-hdr-icon"><i class="fa-solid fa-database"></i></div>
+        <h2>Biblioteca</h2>
+        <span class="card-hdr-count" id="libCount"></span>
+        <div class="card-hdr-right">
+          <button class="btn btn-outline" onclick="triggerImport()" title="Importar desde JSON">
+            <i class="fa-solid fa-file-import"></i> Importar
+          </button>
+          <button class="btn btn-outline" onclick="exportAllForms()" title="Exportar todos">
+            <i class="fa-solid fa-file-export"></i> Exportar todo
+          </button>
+        </div>
       </div>
+      <div class="lib-toolbar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input class="lib-search" id="libSearch" type="search"
+               placeholder="Buscar por nombre, título o URL…" />
+      </div>
+      <div id="libList"></div>
+    </div>
+  </div>
 
+  <!-- Results panel — shared across all form tabs -->
+  <div id="panel-results" style="display:none">
+
+    <div class="banner banner-load" id="loadBanner">
+      <i class="fa-solid fa-circle-notch spin"></i>
       <div>
-        <div class="endpoint-label">Endpoint de envío (POST)</div>
-        <div class="endpoint-row">
-          <code id="resEndpoint"></code>
-          <button class="btn btn-ghost" onclick="copyText(document.getElementById('resEndpoint').textContent)">
-            <i class="fa-solid fa-copy"></i> Copiar
+        <strong>Obteniendo estructura del formulario…</strong>
+        <p>Conectando a través de proxy CORS. Puede tardar unos segundos.</p>
+      </div>
+    </div>
+
+    <div class="banner banner-err" id="errBanner">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <div>
+        <strong id="errTitle">Error al analizar el formulario</strong>
+        <p id="errMsg"></p>
+      </div>
+    </div>
+
+    <div id="results">
+
+      <!-- Form info banner -->
+      <div class="form-info">
+        <div class="form-info-hd">
+          <h3 id="resTitle"></h3>
+          <span class="fi-count" id="resCount"></span>
+        </div>
+        <p id="resDesc" style="display:none"></p>
+        <div id="resShortNotice" style="display:none;font-size:.75rem;color:rgba(255,255,255,.55);padding:.5rem .75rem;background:rgba(255,255,255,.07);border-radius:8px;border:1px solid rgba(255,255,255,.1)">
+          <i class="fa-solid fa-link" style="margin-right:.4rem;color:var(--teal)"></i>
+          Enlace acortado
+          <code id="resShortFrom" style="font-family:monospace;background:rgba(255,255,255,.1);padding:.05rem .3rem;border-radius:4px"></code>
+          resuelto a
+          <code id="resShortTo" style="font-family:monospace;background:rgba(255,255,255,.1);padding:.05rem .3rem;border-radius:4px;word-break:break-all"></code>
+        </div>
+        <div class="form-info-actions">
+          <button id="saveTriggerBtn" class="btn-save-lib" style="display:none"
+                  onclick="saveActiveForm()">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar en biblioteca
           </button>
         </div>
       </div>
 
-      <div class="form-info-actions">
-        <button id="saveTriggerBtn" class="btn-save-lib" style="display:none"
-                onclick="openSaveDialog(_currentFormData, _currentViewformUrl)">
-          <i class="fa-solid fa-floppy-disk"></i> Guardar en biblioteca
-        </button>
-      </div>
-    </div>
-
-    <!-- Fields table -->
-    <div class="card">
-      <div class="card-hdr">
-        <div class="card-hdr-icon"><i class="fa-solid fa-list-check"></i></div>
-        <h2 id="resCount">Campos del formulario</h2>
-      </div>
-      <div class="card-body" style="padding:0">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Pregunta</th>
-                <th>Entry ID</th>
-                <th>Tipo</th>
-                <th>HTML sugerido</th>
-                <th>Opciones / Formato esperado</th>
-              </tr>
-            </thead>
-            <tbody id="fieldsTbody"></tbody>
-          </table>
+      <!-- Fields table -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-hdr-icon"><i class="fa-solid fa-list-check"></i></div>
+          <h2>Campos del formulario</h2>
+        </div>
+        <div class="card-endpoint">
+          <div class="endpoint-label">Endpoint de envío (POST)</div>
+          <div class="endpoint-row-card">
+            <code id="resEndpoint"></code>
+            <button class="btn btn-outline" onclick="copyText(document.getElementById('resEndpoint').textContent)">
+              <i class="fa-solid fa-copy"></i> Copiar
+            </button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Pregunta</th>
+                  <th>Entry ID</th>
+                  <th>Tipo</th>
+                  <th>Opciones / Formato esperado</th>
+                </tr>
+              </thead>
+              <tbody id="fieldsTbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Hidden fields reminder -->
-    <div class="card">
-      <div class="card-hdr">
-        <div class="card-hdr-icon"><i class="fa-solid fa-eye-slash"></i></div>
-        <h2>Campos ocultos obligatorios</h2>
-      </div>
-      <div class="card-body">
-        <div class="info-box">
-          <i class="fa-solid fa-circle-info"></i>
-          <p>
-            Incluye siempre estos tres campos en tu <code>&lt;form&gt;</code>.
-            Sin <code>submit=Submit</code> Google Forms responde <code>200 OK</code> pero no registra la respuesta.<br/><br/>
-            <code>&lt;input type="hidden" name="fvv" value="1" /&gt;</code><br/>
-            <code>&lt;input type="hidden" name="pageHistory" value="0" /&gt;</code><br/>
-            <code>&lt;input type="hidden" name="submit" value="Submit" /&gt;</code>
-          </p>
+      <!-- Exports (tabbed) -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-hdr-icon"><i class="fa-solid fa-code"></i></div>
+          <h2>Exportar integración</h2>
+          <div class="card-hdr-right">
+            <div class="export-tabs">
+              <button class="export-tab export-tab--active" data-tab="json" onclick="switchExportTab('json')">JSON</button>
+              <button class="export-tab" data-tab="html" onclick="switchExportTab('html')">HTML</button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Exports -->
-    <div class="card">
-      <div class="card-hdr">
-        <div class="card-hdr-icon"><i class="fa-solid fa-code"></i></div>
-        <h2>Exportar mapeo</h2>
-      </div>
-      <div class="card-body">
-        <div class="export-block">
-
-          <div>
+        <div class="card-body">
+          <div id="tabJson" class="tab-panel">
             <div class="export-row">
-              <span class="export-title">JSON — mapeo completo de campos</span>
+              <span class="export-title">Mapeo completo de campos</span>
               <button class="btn btn-outline" onclick="copyEl('jsonOut')">
                 <i class="fa-solid fa-copy"></i> Copiar
               </button>
             </div>
             <div class="code-block"><pre id="jsonOut"></pre></div>
           </div>
-
-          <div>
+          <div id="tabHtml" class="tab-panel" style="display:none">
+            <div class="info-box" style="margin-bottom:1.1rem">
+              <i class="fa-solid fa-eye-slash"></i>
+              <p>
+                Incluye siempre estos tres campos en tu <code>&lt;form&gt;</code>.
+                Sin <code>submit=Submit</code> Google Forms responde <code>200 OK</code> pero no registra la respuesta.<br/><br/>
+                <code>&lt;input type="hidden" name="fvv" value="1" /&gt;</code><br/>
+                <code>&lt;input type="hidden" name="pageHistory" value="0" /&gt;</code><br/>
+                <code>&lt;input type="hidden" name="submit" value="Submit" /&gt;</code>
+              </p>
+            </div>
             <div class="export-row">
-              <span class="export-title">HTML — esqueleto de formulario listo para usar</span>
+              <span class="export-title">Esqueleto de formulario listo para personalizar</span>
               <button class="btn btn-outline" onclick="copyEl('htmlOut')">
                 <i class="fa-solid fa-copy"></i> Copiar
               </button>
             </div>
             <div class="code-block"><pre id="htmlOut"></pre></div>
           </div>
-
         </div>
       </div>
-    </div>
 
-  </div><!-- /results -->
+    </div><!-- /results -->
+  </div><!-- /panel-results -->
 
-  <!-- Library -->
-  <div class="card" id="librarySection">
-    <div class="card-hdr">
-      <div class="card-hdr-icon"><i class="fa-solid fa-database"></i></div>
-      <h2>Biblioteca</h2>
-      <span class="card-hdr-count" id="libCount"></span>
-      <div class="card-hdr-right">
-        <button class="btn btn-outline" onclick="triggerImport()" title="Importar desde JSON">
-          <i class="fa-solid fa-file-import"></i> Importar
-        </button>
-        <button class="btn btn-outline" onclick="exportAllForms()" title="Exportar todos">
-          <i class="fa-solid fa-file-export"></i> Exportar todo
-        </button>
-      </div>
-    </div>
-    <div class="lib-toolbar">
-      <i class="fa-solid fa-magnifying-glass"></i>
-      <input class="lib-search" id="libSearch" type="search"
-             placeholder="Buscar por nombre, título o URL…" />
-    </div>
-    <div id="libList"></div>
-  </div>
-
-</div><!-- /page -->
+</div><!-- /content -->
 
 <!-- Toast -->
 <div class="toast" id="toast">

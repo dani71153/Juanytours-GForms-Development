@@ -11,15 +11,111 @@ const Q = {
   10: { name:'Hora',                html:'input[type="time"]',     badge:'b-time',   icon:'fa-clock',         fmt:'HH:MM' },
 };
 
-let _endpoint           = '';
-let _currentFormData    = null;
-let _currentViewformUrl = '';
+let _endpoint = '';
+
+// ─── Tab state ────────────────────────────────────────────────────────────────
+// Each tab: { id, title, status:'loading'|'ready'|'error', formData, viewformUrl, shortUrl, error }
+const MAX_TABS  = 8;
+let   _tabs     = [];
+let   _activeId = 'library';
+let   _tabSeq   = 0;
+
+// ─── Tab management ───────────────────────────────────────────────────────────
+function createFormTab(initialUrl) {
+  if (_tabs.length >= MAX_TABS) {
+    showToast(`Máximo ${MAX_TABS} formularios abiertos al mismo tiempo`);
+    return null;
+  }
+  const id  = `ft${++_tabSeq}`;
+  const tab = { id, title: 'Analizando…', status: 'loading', formData: null, viewformUrl: initialUrl, shortUrl: null, error: '' };
+  _tabs.push(tab);
+  return tab;
+}
+
+function closeTab(id) {
+  const idx = _tabs.findIndex(t => t.id === id);
+  if (idx === -1) return;
+  _tabs.splice(idx, 1);
+  if (_activeId === id) {
+    const next = _tabs[idx] || _tabs[idx - 1];
+    activateTab(next ? next.id : 'library');
+  } else {
+    renderTabBar();
+  }
+}
+
+function activateTab(id) {
+  _activeId = id;
+  renderTabBar();
+
+  const libPanel = document.getElementById('panel-library');
+  const resPanel = document.getElementById('panel-results');
+
+  if (id === 'library') {
+    libPanel.style.display = '';
+    resPanel.style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  libPanel.style.display = 'none';
+  resPanel.style.display = '';
+
+  // Reset inner state
+  document.getElementById('loadBanner').classList.remove('show');
+  document.getElementById('errBanner').classList.remove('show');
+  document.getElementById('results').classList.remove('show');
+  const saveBtn = document.getElementById('saveTriggerBtn');
+  if (saveBtn) saveBtn.style.display = 'none';
+
+  const tab = _tabs.find(t => t.id === id);
+  if (!tab) return;
+
+  if (tab.status === 'loading') {
+    document.getElementById('loadBanner').classList.add('show');
+  } else if (tab.status === 'error') {
+    showErr('Error al analizar el formulario', tab.error);
+  } else if (tab.status === 'ready') {
+    render(tab.formData, tab.viewformUrl, tab.shortUrl);
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderTabBar() {
+  const bar = document.getElementById('tabBar');
+
+  // Update pinned library tab
+  const libTab = bar.querySelector('.tab--pinned');
+  if (libTab) libTab.classList.toggle('tab--active', _activeId === 'library');
+
+  // Remove all dynamic tabs then rebuild
+  bar.querySelectorAll('.tab:not(.tab--pinned)').forEach(el => el.remove());
+
+  _tabs.forEach(tab => {
+    const btn = document.createElement('button');
+    btn.className = `tab${_activeId === tab.id ? ' tab--active' : ''}`;
+    btn.innerHTML = `
+      <i class="fa-solid ${tab.status === 'loading' ? 'fa-circle-notch fa-spin' : 'fa-file-lines'}"></i>
+      <span class="tab-title" title="${esc(tab.title)}">${esc(tab.title)}</span>
+      <span class="tab-close" onclick="event.stopPropagation();closeTab('${tab.id}')" title="Cerrar">
+        <i class="fa-solid fa-xmark"></i>
+      </span>`;
+    btn.onclick = () => activateTab(tab.id);
+    bar.appendChild(btn);
+  });
+}
+
+function saveActiveForm() {
+  const tab = _tabs.find(t => t.id === _activeId);
+  if (tab && tab.formData) openSaveDialog(tab.formData, tab.viewformUrl);
+}
 
 // ─── URL helpers ─────────────────────────────────────────────────────────────
 function isGoogleForms(url) {
   try {
     const p = new URL(url.trim());
-    if (p.hostname === 'forms.gle') return true; // shortener, cualquier path es válido
+    if (p.hostname === 'forms.gle') return true;
     return (p.hostname === 'docs.google.com' || p.hostname === 'forms.google.com')
         && p.pathname.includes('/forms/');
   } catch { return false; }
@@ -39,9 +135,7 @@ function extractCanonical(html) {
 function toViewformUrl(raw) {
   const p = new URL(raw.trim());
   const base = 'https://docs.google.com';
-  let path = p.pathname;
-
-  path = path.replace(/\/$/, '');
+  let path = p.pathname.replace(/\/$/, '');
 
   if (path.endsWith('/viewform')) return base + path;
 
@@ -54,11 +148,9 @@ function toViewformUrl(raw) {
 }
 
 // ─── Fetch via CORS proxy ────────────────────────────────────────────────────
-// Devuelve { html, resolvedUrl } — resolvedUrl es la URL final tras redireccionamientos
 async function fetchHtml(url) {
   const enc = encodeURIComponent(url);
 
-  // Proxy 1: allorigins (JSON {contents, status:{url}}) — sigue redirects server-side
   try {
     const r = await fetch(`https://api.allorigins.win/get?url=${enc}`, { signal: AbortSignal.timeout(18000) });
     if (!r.ok) throw new Error(`allorigins ${r.status}`);
@@ -72,7 +164,6 @@ async function fetchHtml(url) {
     }
     throw new Error('Respuesta vacía de allorigins');
   } catch (e1) {
-    // Proxy 2: corsproxy.io (raw) — no devuelve la URL resuelta, usamos canonical
     try {
       const r = await fetch(`https://corsproxy.io/?${enc}`, { signal: AbortSignal.timeout(18000) });
       if (!r.ok) throw new Error(`corsproxy ${r.status}`);
@@ -128,7 +219,6 @@ function parseForm(raw) {
 
   const fb = raw[1];
 
-  // Title: scan fb for a short non-formId string at common positions
   let title = '';
   const formIdFromRaw = typeof raw[2] === 'string' ? raw[2] : '';
   for (const idx of [1, 8, 3, 6]) {
@@ -139,7 +229,6 @@ function parseForm(raw) {
   }
   if (!title) title = 'Formulario sin título';
 
-  // Description: first string in fb that isn't the title or a formId
   let desc = '';
   for (const idx of [0, 2, 12]) {
     const v = fb[idx];
@@ -153,20 +242,17 @@ function parseForm(raw) {
   walkForFields(raw, fields, seenIds, 0);
 
   if (!fields.length) {
-    console.warn('[GFI] parseForm: no fields found. raw[1] keys with types:',
+    console.warn('[GFI] parseForm: no fields found. raw[1] keys:',
       fb.map((v, i) => `[${i}]=${Array.isArray(v) ? 'Array(' + v.length + ')' : typeof v}`).join(', '));
     throw new Error('El formulario no tiene campos con entry ID detectables. Revisa la consola del navegador (F12) para ver la estructura recibida.');
   }
   return { title, desc, fields };
 }
 
-// Returns true if n looks like a Google Forms entry ID (9-10 digit integer)
 function isEntryId(n) {
   return typeof n === 'number' && Number.isInteger(n) && n >= 10000000;
 }
 
-// Recursively walk the data tree.
-// When a node looks like a question, extract its entries.
 function walkForFields(node, fields, seenIds, depth) {
   if (depth > 14 || !Array.isArray(node)) return;
 
@@ -197,7 +283,6 @@ function walkForFields(node, fields, seenIds, depth) {
             if (opts.length) break;
           }
         }
-
         fields.push({ label, type, entryId: entry[0], name: `entry.${entry[0]}`, desc: qDesc, required, options: opts });
       }
     }
@@ -209,11 +294,9 @@ function walkForFields(node, fields, seenIds, depth) {
 }
 
 // ─── Render results ───────────────────────────────────────────────────────────
-// shortUrl: URL acortada original (forms.gle/…), o null si no aplica
 function render(formData, viewformUrl, shortUrl) {
-  _endpoint           = viewformUrl.replace('/viewform', '/formResponse');
-  _currentFormData    = formData;
-  _currentViewformUrl = viewformUrl;
+  _endpoint = viewformUrl.replace('/viewform', '/formResponse');
+
   const saveTrigger = document.getElementById('saveTriggerBtn');
   if (saveTrigger) saveTrigger.style.display = '';
 
@@ -233,7 +316,7 @@ function render(formData, viewformUrl, shortUrl) {
 
   document.getElementById('resEndpoint').textContent = _endpoint;
   document.getElementById('resCount').textContent =
-    `${formData.fields.length} campo${formData.fields.length !== 1 ? 's' : ''} encontrado${formData.fields.length !== 1 ? 's' : ''}`;
+    `${formData.fields.length} campo${formData.fields.length !== 1 ? 's' : ''}`;
 
   // Table
   const tbody = document.getElementById('fieldsTbody');
@@ -254,7 +337,6 @@ function render(formData, viewformUrl, shortUrl) {
         <span class="entry-chip" title="Clic para copiar" onclick="copyText('${f.name}')">${f.name}</span>
       </td>
       <td><span class="badge ${qt.badge}"><i class="fa-solid ${qt.icon}"></i> ${qt.name}</span></td>
-      <td class="code-sm">${qt.html}</td>
       <td>${optsHtml}</td>`;
     tbody.appendChild(tr);
   });
@@ -306,50 +388,81 @@ ${fieldLines}
   <button type="submit">Enviar</button>
 </form>`;
 
+  switchExportTab('json');
   document.getElementById('results').classList.add('show');
-  setTimeout(() => document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Main analyze ─────────────────────────────────────────────────────────────
 async function analyzeForm() {
   const urlEl = document.getElementById('formUrl');
   const url   = urlEl.value.trim();
 
   urlEl.classList.remove('err');
   document.getElementById('urlErr').classList.remove('show');
-  document.getElementById('loadBanner').classList.remove('show');
-  document.getElementById('errBanner').classList.remove('show');
-  document.getElementById('results').classList.remove('show');
 
   if (!url) { return showUrlErr('Por favor ingresa una URL de Google Forms.'); }
-  if (!isGoogleForms(url)) { return showUrlErr('La URL no corresponde a Google Forms. Debe contener docs.google.com/forms/'); }
+  if (!isGoogleForms(url)) { return showUrlErr('La URL no corresponde a Google Forms. Verifica el dominio.'); }
+
+  // Normalize for duplicate-tab check
+  let normalizedUrl = url;
+  if (!isShortened(url)) {
+    try { normalizedUrl = toViewformUrl(url); } catch { /* keep original */ }
+  }
+  const existing = _tabs.find(t => t.viewformUrl === normalizedUrl || t.viewformUrl === url);
+  if (existing) {
+    activateTab(existing.id);
+    showToast('Este formulario ya está abierto');
+    return;
+  }
+
+  const tab = createFormTab(normalizedUrl);
+  if (!tab) return;
+  activateTab(tab.id);
 
   const btn = document.getElementById('analyzeBtn');
   btn.disabled = true;
   btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Analizando…';
-  document.getElementById('loadBanner').classList.add('show');
 
   try {
     const fetchUrl = isShortened(url) ? url : toViewformUrl(url);
     const { html, resolvedUrl } = await fetchHtml(fetchUrl);
 
     let viewformUrl;
-    try {
-      viewformUrl = toViewformUrl(resolvedUrl);
-    } catch {
-      viewformUrl = isShortened(url) ? url : toViewformUrl(url);
-    }
+    try { viewformUrl = toViewformUrl(resolvedUrl); }
+    catch { viewformUrl = isShortened(url) ? url : toViewformUrl(url); }
 
-    const raw  = extractFbData(html);
-    const form = parseForm(raw);
-    render(form, viewformUrl, isShortened(url) ? resolvedUrl : null);
+    const raw      = extractFbData(html);
+    const formData = parseForm(raw);
+    const shortUrl = isShortened(url) ? resolvedUrl : null;
+
+    tab.title       = formData.title;
+    tab.status      = 'ready';
+    tab.formData    = formData;
+    tab.viewformUrl = viewformUrl;
+    tab.shortUrl    = shortUrl;
+
+    renderTabBar();
+    render(formData, viewformUrl, shortUrl);
   } catch (e) {
+    tab.title  = 'Error';
+    tab.status = 'error';
+    tab.error  = e.message;
+    renderTabBar();
     showErr('Error al analizar el formulario', e.message);
   } finally {
     document.getElementById('loadBanner').classList.remove('show');
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Analizar';
   }
+}
+
+// ─── Export tab switcher ──────────────────────────────────────────────────────
+function switchExportTab(tab) {
+  document.getElementById('tabJson').style.display = tab === 'json' ? '' : 'none';
+  document.getElementById('tabHtml').style.display = tab === 'html' ? '' : 'none';
+  document.querySelectorAll('.export-tab').forEach(btn => {
+    btn.classList.toggle('export-tab--active', btn.dataset.tab === tab);
+  });
 }
 
 // ─── UI helpers ───────────────────────────────────────────────────────────────

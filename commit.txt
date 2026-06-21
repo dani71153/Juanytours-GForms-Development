@@ -1,0 +1,16 @@
+form-config.html — reescrito. El body ahora tiene tres zonas: navbar, tab-bar, y content. Ya no hay .page wrapper ni el antiguo header.
+
+form-config.css — el bloque .hdr fue reemplazado por .navbar + .nav-brand + .nav-analyze + .nav-url-input. Se añadieron .tab-bar, .tab, .tab--active, .tab--pinned, .tab-close. El .url-err ahora es un tooltip absoluto que flota bajo el input del navbar. El .content reemplaza a .page con max-width: 960px.
+
+form-config.js — se añadió el estado de pestañas (_tabs, _activeId, _tabSeq, MAX_TABS = 8) y las funciones createFormTab, closeTab, activateTab, renderTabBar, saveActiveForm. analyzeForm() ahora crea una pestaña antes de hacer el fetch, actualiza su estado al terminar, y detecta si la URL ya está abierta. render() ya no toca scrollIntoView ni variables globales de formulario activo.
+
+form-db.js — loadSaved() ahora crea una pestaña en estado ready con los datos del registro en lugar de llamar render() directamente, y detecta si ya está abierta.
+
+Comportamiento completo:
+
+Pestaña "Biblioteca" siempre fija a la izquierda, sin botón de cerrar
+Cada URL analizada → nueva pestaña con el título del formulario
+Si la misma URL ya está abierta → activa esa pestaña y muestra toast
+Cerrar pestaña con × → activa la adyacente o vuelve a Biblioteca
+Cargar desde biblioteca → abre pestaña propia
+Máximo 8 formularios abiertos simultáneamente

@@ -65,3 +65,5 @@ EditorForms/ - se recupero el estilo verde de las tarjetas informativas del pane
 forms-previsualizer/ - se agrego boton "Exportar" en la barra superior de la vista previa. Copia la configuracion actual de gfi:preview a gfi:editor y abre EditorForms directamente en la pestana Exportar mediante ?tab=export.
 
 shared/form-exporter.js - se movio la descarga ZIP a un exportador compartido. EditorForms y forms-previsualizer ahora cargan el mismo archivo y usan FormExporter para generar index.html, styles.css, script.js y config.json. El boton del previsualizer ahora descarga el ZIP directamente desde gfi:preview sin abrir el editor.
+
+shared/form-exporter.js - se corrigio el render de exports en pantalla: faltaba la funcion summarizeTypes usada por los elementos automaticos del panel lateral. EditorForms ahora tambien tiene fallback local si el exportador compartido falla, evitando dejar HTML/CSS/JS/JSON vacios.

@@ -636,7 +636,13 @@ function renderExports() {
 
 function buildExportOutputs() {
   const config = buildPreviewConfig();
-  if (window.FormExporter) return window.FormExporter.buildOutputs(config);
+  if (window.FormExporter) {
+    try {
+      return window.FormExporter.buildOutputs(config);
+    } catch (err) {
+      console.warn('[EditorForms] Exportador compartido fallo, usando fallback local:', err);
+    }
+  }
   return {
     html: generateHtmlExport(config),
     css: generateCssExport(),

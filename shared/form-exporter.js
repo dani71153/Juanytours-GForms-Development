@@ -339,6 +339,17 @@ ${outputs.html}
     return item.value || '';
   }
 
+  function summarizeTypes(fields) {
+    const counts = {};
+    fields.forEach(field => {
+      const label = FIELD_TYPES[field.type] || `Tipo ${field.type}`;
+      counts[label] = (counts[label] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([label, count]) => `${count} ${label.toLowerCase()}`)
+      .join(' - ');
+  }
+
   function defaultRender(field) {
     if (field.type === 1) return 'textarea';
     if ([2, 5].includes(field.type)) return 'radio';

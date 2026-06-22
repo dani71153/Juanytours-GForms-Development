@@ -17,6 +17,9 @@
   <div class="pv-mode-bar">
     <i class="fa-solid fa-flask-vial"></i>
     <span>Modo vista previa — los envíos se registran en <strong>Google Forms real</strong></span>
+    <button class="pv-mode-bar__link pv-mode-bar__button pv-mode-bar__button--primary" type="button" onclick="downloadPreviewZip()">
+      <i class="fa-solid fa-file-zipper"></i> Descargar ZIP
+    </button>
     <button class="pv-mode-bar__link pv-mode-bar__button" type="button" onclick="clearPreviewStorage()">
       <i class="fa-solid fa-broom"></i> Limpiar cache
     </button>
@@ -47,12 +50,14 @@
       <!-- Left info panel -->
       <aside class="pv-panel">
         <div class="pv-panel__top">
-          <div class="pv-panel__badge">
+          <div class="pv-panel__badge" id="pvPanelBadge">
             <i class="fa-solid fa-magnifying-glass-chart"></i> Google Forms Inspector
           </div>
           <h1 class="pv-panel__title" id="pvTitle">Cargando…</h1>
           <p class="pv-panel__desc" id="pvDesc"></p>
         </div>
+
+        <div class="pv-panel__instructions" id="pvPanelInstructions" style="display:none"></div>
 
         <div class="pv-panel__stats" id="pvStats">
           <!-- Filled by preview.js -->
@@ -101,6 +106,7 @@
     </section>
   </main>
 
+  <script src="../shared/form-exporter.js"></script>
   <script src="preview.js"></script>
 </body>
 </html>

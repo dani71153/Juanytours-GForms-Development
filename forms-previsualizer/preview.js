@@ -49,7 +49,7 @@ function bindPreviewSync() {
 // ─── Build page ───────────────────────────────────────────────────────────────
 function buildPage(config) {
   document.title = `${config.title} | Vista Previa`;
-  fillLeftPanel(config);
+  fillCustomLeftPanel(config);
   fillFormHeader(config);
   buildForm(config);
   document.getElementById('pvNoData').style.display = 'none';
@@ -106,6 +106,89 @@ function summarizeTypes(fields) {
 }
 
 // ─── Form header ──────────────────────────────────────────────────────────────
+function fillCustomLeftPanel(config) {
+  const panel = normalizePanel(config);
+  const badgeEl = document.getElementById('pvPanelBadge');
+  badgeEl.innerHTML = panel.badge
+    ? `<i class="fa-solid fa-magnifying-glass-chart"></i> ${esc(panel.badge)}`
+    : '';
+  badgeEl.style.display = panel.badge ? '' : 'none';
+
+  document.getElementById('pvTitle').textContent = panel.title;
+
+  const descEl = document.getElementById('pvDesc');
+  if (panel.desc) { descEl.textContent = panel.desc; descEl.style.display = ''; }
+  else            { descEl.style.display = 'none'; }
+
+  const instructionsEl = document.getElementById('pvPanelInstructions');
+  instructionsEl.style.display = 'none';
+
+  const stats = panel.items.map(item => {
+    const value = getPanelItemValue(item, config);
+    if (!value) return '';
+    return `
+    <div class="pv-stat">
+      <div class="pv-stat__icon">${esc(item.icon || defaultPanelIcon(item.source))}</div>
+      <div>
+        <div class="pv-stat__label">${esc(item.label || 'Informacion')}</div>
+        <div class="pv-stat__value" style="font-size:.78rem">${multilineHtml(value)}</div>
+      </div>
+    </div>`;
+  }).filter(Boolean);
+
+  const statsEl = document.getElementById('pvStats');
+  statsEl.innerHTML = stats.join('');
+  statsEl.style.display = stats.length ? '' : 'none';
+}
+
+function normalizePanel(config) {
+  const panel = config.panel || {};
+  return {
+    badge: panel.badge ?? 'Google Forms Inspector',
+    title: panel.title ?? config.title,
+    desc: panel.desc ?? config.desc ?? '',
+    items: normalizePanelItems(panel),
+  };
+}
+
+function normalizePanelItems(panel) {
+  if (Array.isArray(panel.items)) {
+    return panel.items.map((item, index) => ({
+      id: item.id || `panel_${index}`,
+      source: ['custom', 'fields', 'types', 'endpoint'].includes(item.source) ? item.source : 'custom',
+      icon: item.icon || defaultPanelIcon(item.source),
+      label: item.label || panelSourceLabel(item.source),
+      value: item.value || '',
+    }));
+  }
+
+  const items = [];
+  if (panel.instructions) items.push({ source: 'custom', icon: 'i', label: 'Instrucciones', value: panel.instructions });
+  if (panel.showFields !== false) items.push({ source: 'fields', icon: '#', label: 'Campos', value: '' });
+  if (panel.showTypes !== false) items.push({ source: 'types', icon: '*', label: 'Tipos de campo', value: '' });
+  if (panel.showEndpoint !== false) items.push({ source: 'endpoint', icon: '@', label: 'Endpoint', value: '' });
+  return items;
+}
+
+function getPanelItemValue(item, config) {
+  if (item.source === 'fields') {
+    const totalFields = config.fields.length;
+    const reqFields = config.fields.filter(field => field.required).length;
+    return `${totalFields} campo${totalFields !== 1 ? 's' : ''}${reqFields ? ` - ${reqFields} obligatorio${reqFields !== 1 ? 's' : ''}` : ''}`;
+  }
+  if (item.source === 'types') return summarizeTypes(config.fields);
+  if (item.source === 'endpoint') return truncateUrl(config.endpoint);
+  return item.value || '';
+}
+
+function defaultPanelIcon(source) {
+  return { fields: '#', types: '*', endpoint: '@', custom: 'i' }[source] || 'i';
+}
+
+function panelSourceLabel(source) {
+  return { fields: 'Campos', types: 'Tipos de campo', endpoint: 'Endpoint', custom: 'Informacion' }[source] || 'Informacion';
+}
+
 function fillFormHeader(config) {
   document.getElementById('pvFormTitle').textContent = config.title;
   const n = config.fields.length;
@@ -395,6 +478,23 @@ function clearPreviewStorage() {
   showNoData();
 }
 
+function downloadPreviewZip() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    showNoData();
+    return;
+  }
+
+  try {
+    const config = JSON.parse(raw);
+    if (!window.FormExporter) throw new Error('Exportador no disponible');
+    window.FormExporter.downloadZip(config);
+  } catch (err) {
+    console.warn('[Previsualizer] No se pudo descargar el ZIP:', err);
+    showNoData();
+  }
+}
+
 function showNoData() {
   document.getElementById('pvNoData').style.display = '';
   document.getElementById('pvPage').style.display   = 'none';
@@ -405,6 +505,10 @@ function esc(s) {
   return String(s || '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function multilineHtml(value) {
+  return esc(value).replace(/\r?\n/g, '<br>');
 }
 
 function truncateUrl(url) {

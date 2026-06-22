@@ -39,3 +39,29 @@ Maximo 8 formularios abiertos simultaneamente
 Recargar la pagina -> restaura pestanas listas, tab activo y URL escrita
 Vista previa -> usa endpoint canonico y permite limpiar su cache local
 Editor -> permite ajustar la presentacion visual del formulario y reenviarla a vista previa
+
+EditorForms/ - se agrego el exportador completo. El editor ahora genera automaticamente HTML, CSS, JS de envio y JSON desde la configuracion editada actual. Cada bloque tiene boton Copiar y tambien existe "Copiar todo", que entrega el HTML junto con style/script listos para pegar. Los exports respetan labels, placeholders, renderAs, ancho, campos ocultos, endpoint, entry IDs y opciones reales.
+
+EditorForms/ - el exportador ahora incluye "Descargar ZIP". Genera en el navegador un archivo .zip estandar con index.html, styles.css, script.js y config.json. WinRAR puede abrirlo normalmente.
+
+EditorForms/ - el index.html del ZIP enlaza styles.css como archivo externo. El CSS embebido se mantiene solo en la accion "Copiar todo", no dentro del index.html descargado.
+
+EditorForms/ - el CSS exportado ahora replica el estilo visual de la previsualizacion: fondo suave con radial/linear gradient, tarjeta blanca con sombra amplia, Playfair para el titulo, inputs/selects redondeados, opciones tipo cards, boton verde CTA y banners de exito/error con el mismo lenguaje visual.
+
+EditorForms/ - el HTML/CSS exportado ahora replica tambien la estructura de la previsualizacion: shell de dos columnas, panel izquierdo oscuro con titulo/descripcion/stats y formulario en la columna derecha. El index exportado carga Inter y Playfair desde Google Fonts.
+
+EditorForms/ - se ajusto el grid del CSS exportado para evitar que inputs de dos columnas se superpongan visualmente: mayor column-gap/row-gap y control de overflow por campo.
+
+EditorForms/ - el area central del editor ahora usa pestanas: Diseno y Exportar. La informacion de exportacion ya no aparece debajo de la previsualizacion, sino dentro de su propia pestana.
+
+EditorForms/ - se corrigio el CSS exportado para que los inputs no se vean cortados: se agrego box-sizing global y se elimino el recorte por overflow en cada campo.
+
+EditorForms/ - se agrego la pestana "Panel lateral" para editar la zona informativa izquierda del formulario. Permite cambiar insignia, titulo, descripcion, instrucciones adicionales y ocultar/mostrar tarjetas de campos, tipos y endpoint. Estos ajustes se guardan en gfi:editor, viajan a gfi:preview, aparecen en la previsualizacion y se reflejan en el HTML/CSS/JSON exportado.
+
+EditorForms/ - el panel lateral ahora usa elementos informativos multiples. Cada elemento puede tener icono, etiqueta, contenido y fuente personalizada o automatica (campos, tipos de campo, endpoint). Se pueden agregar y borrar elementos libremente, y la previsualizacion/exportacion renderizan exactamente esa lista.
+
+EditorForms/ - se recupero el estilo verde de las tarjetas informativas del panel: fondo verde/azulado sutil e iconos verdes consistentes en editor, previsualizacion y exportado. Cada tarjeta editable ahora tiene boton de colapsar/expandir para trabajar con listas largas sin ocupar tanto espacio.
+
+forms-previsualizer/ - se agrego boton "Exportar" en la barra superior de la vista previa. Copia la configuracion actual de gfi:preview a gfi:editor y abre EditorForms directamente en la pestana Exportar mediante ?tab=export.
+
+shared/form-exporter.js - se movio la descarga ZIP a un exportador compartido. EditorForms y forms-previsualizer ahora cargan el mismo archivo y usan FormExporter para generar index.html, styles.css, script.js y config.json. El boton del previsualizer ahora descarga el ZIP directamente desde gfi:preview sin abrir el editor.

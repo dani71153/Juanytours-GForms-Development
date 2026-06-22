@@ -53,17 +53,129 @@
     </aside>
 
     <section class="ef-canvas">
-      <header class="ef-form-head">
-        <div>
-          <h1 id="formTitle">Formulario</h1>
-          <p id="formDesc"></p>
-        </div>
-        <span class="ef-pill" id="endpointPill">Endpoint</span>
-      </header>
+      <div class="ef-canvas-tabs">
+        <button class="ef-canvas-tab is-active" id="tabDesign" type="button" onclick="switchEditorPanel('design')">
+          <i class="fa-solid fa-pen-ruler"></i> Diseno
+        </button>
+        <button class="ef-canvas-tab" id="tabPanel" type="button" onclick="switchEditorPanel('panel')">
+          <i class="fa-solid fa-layer-group"></i> Panel lateral
+        </button>
+        <button class="ef-canvas-tab" id="tabExport" type="button" onclick="switchEditorPanel('export')">
+          <i class="fa-solid fa-code"></i> Exportar
+        </button>
+      </div>
 
-      <form class="ef-form" id="previewForm">
-        <div class="ef-grid" id="previewGrid"></div>
-      </form>
+      <section class="ef-canvas-panel" id="panelDesign">
+        <header class="ef-form-head">
+          <div>
+            <h1 id="formTitle">Formulario</h1>
+            <p id="formDesc"></p>
+          </div>
+          <span class="ef-pill" id="endpointPill">Endpoint</span>
+        </header>
+
+        <form class="ef-form" id="previewForm">
+          <div class="ef-grid" id="previewGrid"></div>
+        </form>
+      </section>
+
+      <section class="ef-canvas-panel" id="panelSide" style="display:none">
+        <section class="ef-panel-editor">
+          <header class="ef-panel-editor__head">
+            <div>
+              <h2>Panel lateral</h2>
+              <p>Edita la zona informativa que aparece a la izquierda del formulario exportado.</p>
+            </div>
+            <button class="ef-btn ef-btn--ghost ef-btn--light" type="button" onclick="resetPanelSettings()">
+              <i class="fa-solid fa-rotate-left"></i> Restaurar
+            </button>
+          </header>
+
+          <div class="ef-panel-editor__grid">
+            <div class="ef-panel-form">
+              <label class="ef-control">
+                <span>Insignia superior</span>
+                <input id="panelBadge" type="text" />
+              </label>
+
+              <label class="ef-control">
+                <span>Titulo lateral</span>
+                <input id="panelTitle" type="text" />
+              </label>
+
+              <label class="ef-control">
+                <span>Descripcion lateral</span>
+                <textarea id="panelDesc"></textarea>
+              </label>
+
+              <div class="ef-panel-items-head">
+                <span>Elementos informativos</span>
+                <button class="ef-mini-btn" type="button" onclick="addPanelItem()">Agregar</button>
+              </div>
+
+              <div class="ef-panel-items" id="panelItems"></div>
+            </div>
+
+            <aside class="ef-panel-preview">
+              <div class="ef-panel-preview__badge" id="panelPreviewBadge"></div>
+              <h3 id="panelPreviewTitle"></h3>
+              <p id="panelPreviewDesc"></p>
+              <div class="ef-panel-preview__stats" id="panelPreviewItems"></div>
+            </aside>
+          </div>
+        </section>
+      </section>
+
+      <section class="ef-canvas-panel" id="panelExport" style="display:none">
+        <section class="ef-export">
+        <header class="ef-export__head">
+          <div>
+            <h2>Exportar formulario</h2>
+            <p>Codigo generado desde la version editada actual.</p>
+          </div>
+          <button class="ef-btn ef-btn--primary" type="button" onclick="copyFullExport()">
+            <i class="fa-solid fa-copy"></i> Copiar todo
+          </button>
+          <button class="ef-btn ef-btn--primary" type="button" onclick="downloadExportZip()">
+            <i class="fa-solid fa-file-zipper"></i> Descargar ZIP
+          </button>
+        </header>
+
+        <div class="ef-export-grid">
+          <article class="ef-export-card">
+            <div class="ef-export-card__head">
+              <span><i class="fa-solid fa-code"></i> HTML</span>
+              <button class="ef-mini-btn" type="button" onclick="copyExport('html')">Copiar</button>
+            </div>
+            <pre id="exportHtml"></pre>
+          </article>
+
+          <article class="ef-export-card">
+            <div class="ef-export-card__head">
+              <span><i class="fa-solid fa-palette"></i> CSS</span>
+              <button class="ef-mini-btn" type="button" onclick="copyExport('css')">Copiar</button>
+            </div>
+            <pre id="exportCss"></pre>
+          </article>
+
+          <article class="ef-export-card">
+            <div class="ef-export-card__head">
+              <span><i class="fa-brands fa-js"></i> JS</span>
+              <button class="ef-mini-btn" type="button" onclick="copyExport('js')">Copiar</button>
+            </div>
+            <pre id="exportJs"></pre>
+          </article>
+
+          <article class="ef-export-card">
+            <div class="ef-export-card__head">
+              <span><i class="fa-solid fa-database"></i> JSON</span>
+              <button class="ef-mini-btn" type="button" onclick="copyExport('json')">Copiar</button>
+            </div>
+            <pre id="exportJson"></pre>
+          </article>
+        </div>
+        </section>
+      </section>
     </section>
 
     <aside class="ef-props">
@@ -132,6 +244,7 @@
     <span id="toastText">Guardado</span>
   </div>
 
+  <script src="../shared/form-exporter.js"></script>
   <script src="editor.js"></script>
 </body>
 </html>

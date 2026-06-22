@@ -121,6 +121,17 @@ body {
   font-size: var(--pv-text-xs);
 }
 
+.pv-mode-bar__button--primary {
+  color: var(--pv-white);
+  background: rgba(13, 154, 148, .18);
+  border: 1px solid rgba(13, 154, 148, .36);
+}
+
+.pv-mode-bar__button--primary ~ .pv-mode-bar__button,
+.pv-mode-bar__button--primary ~ .pv-mode-bar__link {
+  margin-left: 0;
+}
+
 .pv-mode-bar__button + .pv-mode-bar__link {
   margin-left: 0;
 }
@@ -238,6 +249,18 @@ body {
   max-width: 30rem;
 }
 
+.pv-panel__instructions {
+  position: relative;
+  padding: .85rem 1rem;
+  border-radius: var(--pv-r-lg);
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .1);
+  color: rgba(255, 255, 255, .74);
+  font-size: var(--pv-text-sm);
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
 /* Stats */
 .pv-panel__stats {
   position: relative;
@@ -252,8 +275,8 @@ body {
   gap: .85rem;
   padding: .7rem .9rem;
   border-radius: var(--pv-r-lg);
-  background: rgba(255, 255, 255, .07);
-  border: 1px solid rgba(255, 255, 255, .1);
+  background: linear-gradient(135deg, rgba(13, 154, 148, .18), rgba(255, 255, 255, .08));
+  border: 1px solid rgba(13, 154, 148, .28);
   backdrop-filter: blur(8px);
 }
 

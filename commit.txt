@@ -67,3 +67,7 @@ forms-previsualizer/ - se agrego boton "Exportar" en la barra superior de la vis
 shared/form-exporter.js - se movio la descarga ZIP a un exportador compartido. EditorForms y forms-previsualizer ahora cargan el mismo archivo y usan FormExporter para generar index.html, styles.css, script.js y config.json. El boton del previsualizer ahora descarga el ZIP directamente desde gfi:preview sin abrir el editor.
 
 shared/form-exporter.js - se corrigio el render de exports en pantalla: faltaba la funcion summarizeTypes usada por los elementos automaticos del panel lateral. EditorForms ahora tambien tiene fallback local si el exportador compartido falla, evitando dejar HTML/CSS/JS/JSON vacios.
+
+EditorForms/ - se implemento la primera version del editor por grid. En la pestana Diseno ahora se pueden arrastrar campos dentro de la previsualizacion para reordenarlos. El nuevo orden se guarda en gfi:editor, actualiza la lista lateral, la previsualizacion, el panel exportador y el ZIP generado.
+
+EditorForms/ - durante el reordenamiento por drag ahora se iluminan todos los campos disponibles del grid y el destino bajo el cursor queda resaltado con mayor intensidad.

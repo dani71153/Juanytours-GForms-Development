@@ -40,6 +40,7 @@ let editorState = null;
 let selectedId = null;
 let toastTimer = null;
 let activePanel = 'design';
+let draggedFieldId = null;
 
 document.addEventListener('DOMContentLoaded', initEditor);
 
@@ -326,7 +327,14 @@ function renderPanelPreview() {
 function buildPreviewField(field) {
   const wrapper = document.createElement('div');
   wrapper.className = `ef-field${field.width === 'full' ? ' ef-field--full' : ''}${field.hidden ? ' ef-field--hidden' : ''}${field.uid === selectedId ? ' is-selected' : ''}`;
+  wrapper.draggable = !field.hidden;
+  wrapper.dataset.uid = field.uid;
   wrapper.onclick = () => selectField(field.uid);
+  wrapper.addEventListener('dragstart', event => startFieldDrag(event, field.uid));
+  wrapper.addEventListener('dragover', event => dragOverField(event, field.uid));
+  wrapper.addEventListener('dragleave', event => event.currentTarget.classList.remove('is-drop-target'));
+  wrapper.addEventListener('drop', event => dropField(event, field.uid));
+  wrapper.addEventListener('dragend', finishFieldDrag);
 
   const label = document.createElement('label');
   label.textContent = field.label;
@@ -394,6 +402,63 @@ function buildOptionGroup(field, type) {
   });
 
   return grid;
+}
+
+function startFieldDrag(event, uid) {
+  draggedFieldId = uid;
+  selectedId = uid;
+  document.getElementById('previewGrid').classList.add('is-reordering');
+  event.currentTarget.classList.add('is-dragging');
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', uid);
+  renderFieldList();
+}
+
+function dragOverField(event, targetId) {
+  if (!draggedFieldId || draggedFieldId === targetId) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.ef-field.is-drop-target').forEach(el => {
+    if (el !== event.currentTarget) el.classList.remove('is-drop-target');
+  });
+  event.currentTarget.classList.add('is-drop-target');
+}
+
+function dropField(event, targetId) {
+  event.preventDefault();
+  event.currentTarget.classList.remove('is-drop-target');
+  const sourceId = event.dataTransfer.getData('text/plain') || draggedFieldId;
+  if (!sourceId || sourceId === targetId) return;
+
+  const rect = event.currentTarget.getBoundingClientRect();
+  const isAfter = event.clientY > rect.top + rect.height / 2;
+  moveField(sourceId, targetId, isAfter);
+}
+
+function finishFieldDrag() {
+  draggedFieldId = null;
+  document.getElementById('previewGrid').classList.remove('is-reordering');
+  document.querySelectorAll('.ef-field.is-dragging, .ef-field.is-drop-target').forEach(el => {
+    el.classList.remove('is-dragging', 'is-drop-target');
+  });
+}
+
+function moveField(sourceId, targetId, insertAfter) {
+  const from = editorState.fields.findIndex(field => field.uid === sourceId);
+  const target = editorState.fields.findIndex(field => field.uid === targetId);
+  if (from < 0 || target < 0 || from === target) return;
+
+  const [field] = editorState.fields.splice(from, 1);
+  let to = editorState.fields.findIndex(entry => entry.uid === targetId);
+  if (insertAfter) to += 1;
+  editorState.fields.splice(to, 0, field);
+  selectedId = sourceId;
+  persistSilent();
+  renderFieldList();
+  renderPreview();
+  renderProps();
+  renderPanelPreview();
+  renderExports();
 }
 
 function renderProps() {

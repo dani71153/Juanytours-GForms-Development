@@ -41,6 +41,8 @@ let selectedId = null;
 let toastTimer = null;
 let activePanel = 'design';
 let draggedFieldId = null;
+let undoStack = [];
+const MAX_UNDO_STEPS = 40;
 
 document.addEventListener('DOMContentLoaded', initEditor);
 
@@ -201,6 +203,7 @@ function renderAll() {
   renderPanelEditor();
   renderExports();
   renderEditorPanel();
+  updateUndoButton();
 }
 
 function switchEditorPanel(panel) {
@@ -448,6 +451,7 @@ function moveField(sourceId, targetId, insertAfter) {
   const target = editorState.fields.findIndex(field => field.uid === targetId);
   if (from < 0 || target < 0 || from === target) return;
 
+  pushUndoState();
   const [field] = editorState.fields.splice(from, 1);
   let to = editorState.fields.findIndex(entry => entry.uid === targetId);
   if (insertAfter) to += 1;
@@ -534,9 +538,44 @@ function bindPanelProp(id, onChange) {
   document.getElementById(id).addEventListener('input', event => onChange(event.target.value));
 }
 
+function pushUndoState() {
+  const snapshot = JSON.stringify(exportEditorState());
+  if (undoStack[undoStack.length - 1] === snapshot) return;
+  undoStack.push(snapshot);
+  if (undoStack.length > MAX_UNDO_STEPS) undoStack.shift();
+  updateUndoButton();
+}
+
+function undoEditorChange() {
+  const snapshot = undoStack.pop();
+  if (!snapshot) {
+    updateUndoButton();
+    return;
+  }
+
+  try {
+    editorState = normalizeEditorState(JSON.parse(snapshot));
+    if (!editorState.fields.some(field => field.uid === selectedId)) {
+      selectedId = editorState.fields[0]?.uid || null;
+    }
+    persistSilent();
+    renderAll();
+    toast('Cambio deshecho');
+  } catch (err) {
+    console.warn('[EditorForms] No se pudo deshacer:', err);
+    updateUndoButton();
+  }
+}
+
+function updateUndoButton() {
+  const button = document.getElementById('undoBtn');
+  if (button) button.disabled = !undoStack.length;
+}
+
 function updateSelected(patch) {
   const field = getSelectedField();
   if (!field) return;
+  pushUndoState();
   Object.assign(field, patch);
   persistSilent();
   renderFieldList();
@@ -547,6 +586,7 @@ function updateSelected(patch) {
 }
 
 function updatePanel(patch) {
+  pushUndoState();
   Object.assign(editorState.panel, patch);
   persistSilent();
   renderPanelPreview();
@@ -554,6 +594,7 @@ function updatePanel(patch) {
 }
 
 function addPanelItem() {
+  pushUndoState();
   editorState.panel.items.push(normalizePanelItem({
     source: 'custom',
     icon: 'i',
@@ -569,6 +610,7 @@ function addPanelItem() {
 function updatePanelItem(id, patch) {
   const item = editorState.panel.items.find(entry => entry.id === id);
   if (!item) return;
+  pushUndoState();
   Object.assign(item, patch);
   if (patch.source) {
     item.icon = defaultPanelIcon(patch.source);
@@ -581,6 +623,7 @@ function updatePanelItem(id, patch) {
 }
 
 function removePanelItem(id) {
+  pushUndoState();
   editorState.panel.items = editorState.panel.items.filter(item => item.id !== id);
   persistSilent();
   renderPanelItemsEditor();
@@ -599,6 +642,7 @@ function togglePanelItem(id) {
 function resetSelectedField() {
   const field = getSelectedField();
   if (!field) return;
+  pushUndoState();
   const info = FIELD_TYPES[field.type] || { defaultRender: 'text' };
   field.label = field.originalLabel;
   field.placeholder = '';
@@ -611,6 +655,7 @@ function resetSelectedField() {
 }
 
 function resetPanelSettings() {
+  pushUndoState();
   editorState.panel = normalizePanel(null, editorState);
   persistSilent();
   renderPanelEditor();
@@ -635,6 +680,7 @@ function saveEditorConfig() {
 
 function persistSilent() {
   localStorage.setItem(EDITOR_KEY, JSON.stringify(exportEditorState()));
+  updateUndoButton();
 }
 
 function syncPreviewConfig() {

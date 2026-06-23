@@ -71,3 +71,5 @@ shared/form-exporter.js - se corrigio el render de exports en pantalla: faltaba 
 EditorForms/ - se implemento la primera version del editor por grid. En la pestana Diseno ahora se pueden arrastrar campos dentro de la previsualizacion para reordenarlos. El nuevo orden se guarda en gfi:editor, actualiza la lista lateral, la previsualizacion, el panel exportador y el ZIP generado.
 
 EditorForms/ - durante el reordenamiento por drag ahora se iluminan todos los campos disponibles del grid y el destino bajo el cursor queda resaltado con mayor intensidad.
+
+EditorForms/ - se agrego boton "Deshacer" en la barra superior del editor. Mantiene un historial de hasta 40 estados y permite revertir cambios de campos, orden del grid y panel lateral, actualizando gfi:editor y el exportador.
